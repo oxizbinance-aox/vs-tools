@@ -1,0 +1,31 @@
+{
+  "name": "vs-tools-pro-final-max",
+  "private": true,
+  "version": "6.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "server": "node server.js",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@ffmpeg/ffmpeg": "^0.12.10",
+    "@ffmpeg/util": "^0.12.1",
+    "@imgly/background-removal": "^1.5.5",
+    "@supabase/supabase-js": "^2.49.8",
+    "@vitejs/plugin-react": "^5.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "lucide-react": "^0.511.0",
+    "multer": "^2.0.0",
+    "openai": "^4.104.0",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "replicate": "^1.0.1",
+    "vite": "^7.0.0",
+    "wavesurfer.js": "^7.9.5"
+  },
+  "devDependencies": {}
+}
