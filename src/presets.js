@@ -1,5 +1,6 @@
 export const BACKEND_URL =
-  import.meta.env.VITE_BACKEND_URL || "http://localhost:5050";
+  import.meta.env.VITE_BACKEND_URL ||
+  "https://kind-flow-production-cc02.up.railway.app";
 
 export const TEXT = {
   id: {

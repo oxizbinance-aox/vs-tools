@@ -13,26 +13,15 @@ export async function startBackendRender({
 
   for (let i = 0; i < slides.length; i++) {
     const imageBlob = await fetch(slides[i].url).then((res) => res.blob());
-
     formData.append("images", imageBlob, `slide-${i + 1}.png`);
   }
 
   const audioBlob = await fetch(audioDataUrl).then((res) => res.blob());
-
   formData.append("audio", audioBlob, audioName || "audio.mp3");
 
   const projectBlob = new Blob(
-    [
-      JSON.stringify({
-        slides,
-        subtitles,
-        videoSize,
-        language
-      })
-    ],
-    {
-      type: "application/json"
-    }
+    [JSON.stringify({ slides, subtitles, videoSize, language })],
+    { type: "application/json" }
   );
 
   formData.append("project", projectBlob, "project.json");
@@ -56,7 +45,6 @@ export async function startBackendRender({
         );
 
         const progress = await progressResponse.json();
-
         onProgress?.(progress);
 
         if (progress.status === "complete") {
