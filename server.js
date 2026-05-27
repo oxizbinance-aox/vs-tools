@@ -76,11 +76,11 @@ app.post(
       });
 
       const lines = images
-        .map((img) => {
-          const safePath = img.path.replace(/\\/g, "/");
-          return `file '${safePath}'\nduration 5`;
-        })
-        .join("\n");
+  .map((img) => {
+    const safePath = path.resolve(img.path).replace(/\\/g, "/");
+    return `file '${safePath}'\nduration 5`;
+  })
+  .join("\n");
 
       fs.writeFileSync(listPath, lines);
 
