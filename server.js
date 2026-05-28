@@ -536,39 +536,22 @@ function safeFilename(filename, fallback) {
 
 ```js
 async function getBrowser() {
-  try {
-    const puppeteer = require("puppeteer");
+  const puppeteer = require("puppeteer");
 
-    const executablePath =
+  return await puppeteer.launch({
+    headless: "new",
+    executablePath:
       process.env.PUPPETEER_EXECUTABLE_PATH ||
       process.env.CHROME_BIN ||
-      "/usr/bin/chromium";
-
-    return await puppeteer.launch({
-      headless: "new",
-      executablePath,
-      args: [
-        "--no-sandbox",
-        "--disable-setuid-sandbox",
-        "--disable-dev-shm-usage",
-        "--disable-gpu",
-        "--disable-software-rasterizer",
-        "--disable-extensions",
-        "--single-process",
-        "--no-zygote",
-        "--autoplay-policy=no-user-gesture-required",
-      ],
-      ignoreHTTPSErrors: true,
-    });
-  } catch (error) {
-    console.error("Browser launch failed:", error);
-
-    throw new Error(
-      "Browser launch failed: " + error.message
-    );
-  }
+      "/usr/bin/chromium",
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-dev-shm-usage",
+      "--disable-gpu"
+    ],
+  });
 }
-```
 
 
 app.post("/api/render/html", (req, res) => {
