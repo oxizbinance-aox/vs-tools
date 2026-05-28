@@ -13,4 +13,4 @@ nixPkgs = [
 cmds = ["npm install"]
 
 [start]
-cmd = "node server.js"
+cmd = "node server.cjs"
