@@ -4,13 +4,21 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { execFile } = require("child_process");
+const { createClient } = require("@supabase/supabase-js");
+require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+const supabase =
+  process.env.SUPABASE_URL && process.env.SUPABASE_ANON_KEY
+    ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_ANON_KEY)
+    : null;
+
 app.use(cors());
-app.use(express.json({ limit: "300mb" }));
-app.use(express.urlencoded({ extended: true, limit: "300mb" }));
+app.use(express.json({ limit: "500mb" }));
+app.use(express.urlencoded({ extended: true, limit: "500mb" }));
+app.use(express.static(path.join(__dirname, "public")));
 
 const uploadDir = path.join(__dirname, "uploads");
 const outputDir = path.join(__dirname, "outputs");
@@ -21,8 +29,8 @@ if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 const upload = multer({
   dest: uploadDir,
   limits: {
-    fileSize: 300 * 1024 * 1024,
-    files: 130
+    fileSize: 500 * 1024 * 1024,
+    files: 160
   }
 });
 
@@ -30,65 +38,176 @@ function safeName(name) {
   return String(name || "result.mp4").split(/[\\\/:*?"<>| ]/).join("") || "result.mp4";
 }
 
+function clampNumber(value, min, max, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, n));
+}
+
 function run(cmd, args) {
   return new Promise(function (resolve, reject) {
-    execFile(cmd, args, { maxBuffer: 1024 * 1024 * 20 }, function (error, stdout, stderr) {
+    execFile(cmd, args, { maxBuffer: 1024 * 1024 * 30 }, function (error, stdout, stderr) {
       if (error) return reject(new Error(stderr || error.message));
       resolve({ stdout, stderr });
     });
   });
 }
 
-async function getAudioDuration(audioPath) {
-  try {
-    const result = await run("ffprobe", [
-      "-v", "error",
-      "-show_entries", "format=duration",
-      "-of", "default=noprint_wrappers=1:nokey=1",
-      audioPath
-    ]);
+function escapeText(text) {
+  return String(text || "")
+    .replace(/\\/g, "\\\\")
+    .replace(/:/g, "\\:")
+    .replace(/'/g, "\\'")
+    .replace(/\n/g, " ");
+}
 
-    const duration = parseFloat(String(result.stdout).trim());
-    if (!duration || Number.isNaN(duration)) return 10;
-    return duration;
-  } catch (error) {
-    return 10;
+function parseTimeline(raw) {
+  try {
+    const data = JSON.parse(raw || "[]");
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
   }
 }
 
-function motionFilter(effect, width, height, fps) {
-  const base =
+function buildMotionFilter(item, width, height, fps) {
+  const effect = item.effect || "cinematic";
+  const duration = clampNumber(item.duration, 0.2, 36000, 5);
+  const totalFrames = Math.max(1, Math.floor(duration * fps));
+
+  const zoomStart = clampNumber(item.zoomStart, 1, 5, 1);
+  const zoomEnd = clampNumber(item.zoomEnd, 1, 5, 1.18);
+  const focusX = clampNumber(item.focusX, 0, 1, 0.5);
+  const focusY = clampNumber(item.focusY, 0, 1, 0.5);
+
+  const prep =
     "scale=" + width + ":" + height + ":force_original_aspect_ratio=increase," +
     "crop=" + width + ":" + height;
 
-  if (effect === "zoom_in") {
-    return base + ",zoompan=z='min(zoom+0.0018,1.22)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=" + width + ":" + height + ",fps=" + fps + ",format=yuv420p";
+  let zoomExpr = "'1.0'";
+  let xExpr = "'(iw-iw/zoom)*0.5'";
+  let yExpr = "'(ih-ih/zoom)*0.5'";
+
+  if (effect === "manual_zoom") {
+    zoomExpr = "'" + zoomStart + "+(" + (zoomEnd - zoomStart) + ")*on/" + totalFrames + "'";
+    xExpr = "'(iw-iw/zoom)*" + focusX + "'";
+    yExpr = "'(ih-ih/zoom)*" + focusY + "'";
+  } else if (effect === "zoom_in") {
+    zoomExpr = "'min(1.25,1+0.25*on/" + totalFrames + ")'";
+  } else if (effect === "zoom_out") {
+    zoomExpr = "'max(1.0,1.25-0.25*on/" + totalFrames + ")'";
+  } else if (effect === "pan_left") {
+    zoomExpr = "'1.18'";
+    xExpr = "'(iw-iw/zoom)*(1-on/" + totalFrames + ")'";
+  } else if (effect === "pan_right") {
+    zoomExpr = "'1.18'";
+    xExpr = "'(iw-iw/zoom)*(on/" + totalFrames + ")'";
+  } else if (effect === "pan_up") {
+    zoomExpr = "'1.18'";
+    yExpr = "'(ih-ih/zoom)*(1-on/" + totalFrames + ")'";
+  } else if (effect === "pan_down") {
+    zoomExpr = "'1.18'";
+    yExpr = "'(ih-ih/zoom)*(on/" + totalFrames + ")'";
+  } else if (effect === "pulse") {
+    zoomExpr = "'1.06+0.035*sin(on/10)'";
+  } else if (effect === "rotate_zoom") {
+    zoomExpr = "'min(1.18,1+0.18*on/" + totalFrames + ")'";
+  } else if (effect === "blur_zoom") {
+    zoomExpr = "'min(1.20,1+0.20*on/" + totalFrames + ")'";
+  } else if (effect === "none") {
+    return "scale=" + width + ":" + height + ":force_original_aspect_ratio=decrease,pad=" + width + ":" + height + ":(ow-iw)/2:(oh-ih)/2,format=yuv420p";
+  } else {
+    zoomExpr = "'min(1.16,1+0.16*on/" + totalFrames + ")'";
+    xExpr = "'(iw-iw/zoom)*0.5+sin(on/35)*18'";
+    yExpr = "'(ih-ih/zoom)*0.5+cos(on/40)*12'";
   }
 
-  if (effect === "zoom_out") {
-    return base + ",zoompan=z='if(lte(zoom,1.0),1.22,max(1.001,zoom-0.0018))':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=" + width + ":" + height + ",fps=" + fps + ",format=yuv420p";
+  let filter =
+    prep +
+    ",zoompan=z=" + zoomExpr +
+    ":x=" + xExpr +
+    ":y=" + yExpr +
+    ":d=1:s=" + width + "x" + height +
+    ":fps=" + fps;
+
+  if (effect === "rotate_zoom") {
+    filter += ",rotate='0.006*sin(n/30)':fillcolor=black";
   }
 
-  if (effect === "pan_left") {
-    return base + ",zoompan=z='1.12':d=1:x='iw-(iw/zoom)-on*2':y='ih/2-(ih/zoom/2)',scale=" + width + ":" + height + ",fps=" + fps + ",format=yuv420p";
+  if (effect === "blur_zoom") {
+    filter += ",boxblur=2:1,unsharp=5:5:0.8";
   }
 
-  if (effect === "pan_right") {
-    return base + ",zoompan=z='1.12':d=1:x='on*2':y='ih/2-(ih/zoom/2)',scale=" + width + ":" + height + ",fps=" + fps + ",format=yuv420p";
-  }
-
-  if (effect === "pulse") {
-    return base + ",zoompan=z='1.04+0.035*sin(on/12)':d=1:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)',scale=" + width + ":" + height + ",fps=" + fps + ",format=yuv420p";
-  }
-
-  return base + ",zoompan=z='min(zoom+0.0012,1.16)':d=1:x='iw/2-(iw/zoom/2)+sin(on/35)*18':y='ih/2-(ih/zoom/2)+cos(on/40)*12',scale=" + width + ":" + height + ",fps=" + fps + ",format=yuv420p";
+  filter += ",format=yuv420p";
+  return filter;
 }
 
-async function createScene(imagePath, scenePath, duration, effect, width, height, fps) {
-  const vf =
-    motionFilter(effect, width, height, fps) +
-    ",fade=t=in:st=0:d=0.35" +
-    ",fade=t=out:st=" + Math.max(0.1, duration - 0.45).toFixed(2) + ":d=0.35";
+function applyTransitionAndText(filter, item, width, duration) {
+  const transition = item.transition || "fade";
+  const title = escapeText(item.title || "");
+  const subtitle = escapeText(item.subtitle || "");
+
+  if (transition === "fade") {
+    filter += ",fade=t=in:st=0:d=0.35,fade=t=out:st=" + Math.max(0.1, duration - 0.4).toFixed(2) + ":d=0.35";
+  } else if (transition === "fade_in") {
+    filter += ",fade=t=in:st=0:d=0.45";
+  } else if (transition === "fade_out") {
+    filter += ",fade=t=out:st=" + Math.max(0.1, duration - 0.5).toFixed(2) + ":d=0.45";
+  } else if (transition === "flash") {
+    filter += ",fade=t=in:st=0:d=0.15:color=white,fade=t=out:st=" + Math.max(0.1, duration - 0.2).toFixed(2) + ":d=0.15:color=white";
+  } else if (transition === "dark") {
+    filter += ",fade=t=in:st=0:d=0.35:color=black,fade=t=out:st=" + Math.max(0.1, duration - 0.4).toFixed(2) + ":d=0.35:color=black";
+  }
+
+  const titleSize = Math.max(34, Math.floor(width / 18));
+  const subtitleSize = Math.max(20, Math.floor(width / 40));
+
+  let titleY = "(h-text_h)/2-55";
+  let subtitleY = "(h-text_h)/2+45";
+
+  if (item.title_position === "top") {
+    titleY = "h*0.14";
+    subtitleY = "h*0.14+85";
+  } else if (item.title_position === "bottom") {
+    titleY = "h*0.68";
+    subtitleY = "h*0.68+85";
+  }
+
+  if (title.length > 0) {
+    filter +=
+      ",drawtext=text='" + title + "'" +
+      ":fontcolor=white" +
+      ":fontsize=" + titleSize +
+      ":x=(w-text_w)/2" +
+      ":y=" + titleY +
+      ":shadowcolor=black@0.95" +
+      ":shadowx=4" +
+      ":shadowy=4" +
+      ":borderw=2" +
+      ":bordercolor=black@0.65";
+  }
+
+  if (subtitle.length > 0) {
+    filter +=
+      ",drawtext=text='" + subtitle + "'" +
+      ":fontcolor=white@0.9" +
+      ":fontsize=" + subtitleSize +
+      ":x=(w-text_w)/2" +
+      ":y=" + subtitleY +
+      ":shadowcolor=black@0.9" +
+      ":shadowx=3" +
+      ":shadowy=3" +
+      ":borderw=1" +
+      ":bordercolor=black@0.55";
+  }
+
+  return filter;
+}
+
+async function createScene(imagePath, scenePath, item, width, height, fps) {
+  const duration = clampNumber(item.duration, 0.2, 36000, 5);
+  let filter = buildMotionFilter(item, width, height, fps);
+  filter = applyTransitionAndText(filter, item, width, duration);
 
   await run("ffmpeg", [
     "-y",
@@ -96,7 +215,7 @@ async function createScene(imagePath, scenePath, duration, effect, width, height
     "-framerate", String(fps),
     "-t", String(duration),
     "-i", imagePath,
-    "-vf", vf,
+    "-vf", filter,
     "-an",
     "-c:v", "libx264",
     "-preset", "veryfast",
@@ -123,6 +242,11 @@ async function concatScenes(scenePaths, concatFile, videoOnlyPath) {
 }
 
 async function mergeAudio(videoOnlyPath, audioPath, outputPath) {
+  if (!audioPath) {
+    fs.copyFileSync(videoOnlyPath, outputPath);
+    return;
+  }
+
   await run("ffmpeg", [
     "-y",
     "-i", videoOnlyPath,
@@ -138,35 +262,74 @@ async function mergeAudio(videoOnlyPath, audioPath, outputPath) {
 
 function cleanup(paths) {
   paths.forEach(function (p) {
-    if (p && fs.existsSync(p)) {
-      fs.unlink(p, function () {});
-    }
+    if (p && fs.existsSync(p)) fs.unlink(p, function () {});
   });
 }
 
 app.get("/", function (req, res) {
-  res.send("VS Tools Multi Scene Video Engine Running");
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.get("/api/health", function (req, res) {
   res.json({
     ok: true,
-    engine: "VS Tools Multi Scene Video Engine",
+    engine: "VS-Tools Presentation Timeline Engine",
+    dashboard: true,
+    auth: Boolean(supabase),
     output: "mp4",
-    endpoint: "/api/video/scenes",
-    maxImages: 100,
-    maxUploadSizeMB: 300,
-    duration: "auto from audio",
-    effects: ["cinematic", "zoom_in", "zoom_out", "pan_left", "pan_right", "pulse"],
-    transitions: ["fade_per_scene"],
+    endpoint: "/api/video/timeline",
+    perImageDuration: true,
+    manualObjectZoom: true,
     timestamp: new Date().toISOString()
   });
 });
 
+app.post("/api/auth/signup", async function (req, res) {
+  try {
+    if (!supabase) {
+      return res.status(500).json({ ok: false, error: "Supabase env is not configured" });
+    }
+
+    const email = req.body.email;
+    const password = req.body.password;
+
+    const result = await supabase.auth.signUp({ email, password });
+
+    if (result.error) {
+      return res.status(400).json({ ok: false, error: result.error.message });
+    }
+
+    res.json({ ok: true, user: result.data.user, session: result.data.session });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.post("/api/auth/login", async function (req, res) {
+  try {
+    if (!supabase) {
+      return res.status(500).json({ ok: false, error: "Supabase env is not configured" });
+    }
+
+    const email = req.body.email;
+    const password = req.body.password;
+
+    const result = await supabase.auth.signInWithPassword({ email, password });
+
+    if (result.error) {
+      return res.status(400).json({ ok: false, error: result.error.message });
+    }
+
+    res.json({ ok: true, user: result.data.user, session: result.data.session });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 app.post(
-  "/api/video/scenes",
+  "/api/video/timeline",
   upload.fields([
-    { name: "images", maxCount: 100 },
+    { name: "images", maxCount: 150 },
     { name: "audio", maxCount: 1 }
   ]),
   async function (req, res) {
@@ -174,36 +337,25 @@ app.post(
     let outputPath = "";
 
     try {
-      if (!req.files || !req.files.images || !req.files.audio) {
+      if (!req.files || !req.files.images) {
         return res.status(400).json({
           ok: false,
-          error: "images and audio are required"
+          error: "images are required"
         });
       }
 
       const images = req.files.images;
-      const audioPath = req.files.audio[0].path;
-      tempFiles.push(audioPath);
+      const audioPath = req.files.audio && req.files.audio[0] ? req.files.audio[0].path : "";
 
-      if (!images.length) {
-        return res.status(400).json({
-          ok: false,
-          error: "At least one image is required"
-        });
-      }
-
-      images.forEach(function (img) {
-        tempFiles.push(img.path);
-      });
+      images.forEach(function (img) { tempFiles.push(img.path); });
+      if (audioPath) tempFiles.push(audioPath);
 
       const filename = safeName(req.body.filename || "result.mp4");
-      const width = Number(req.body.width || 1280);
-      const height = Number(req.body.height || 720);
-      const fps = Number(req.body.fps || 30);
-      const effect = req.body.effect || "cinematic";
+      const width = clampNumber(req.body.width, 360, 3840, 1280);
+      const height = clampNumber(req.body.height, 360, 2160, 720);
+      const fps = clampNumber(req.body.fps, 15, 60, 30);
 
-      const audioDuration = await getAudioDuration(audioPath);
-      const sceneDuration = Math.max(1.5, audioDuration / images.length);
+      const timeline = parseTimeline(req.body.timeline);
 
       const jobId = String(Date.now());
       const scenePaths = [];
@@ -214,24 +366,16 @@ app.post(
       tempFiles.push(concatFile, videoOnlyPath, outputPath);
 
       for (let i = 0; i < images.length; i++) {
+        const item = timeline[i] || {};
+        if (!item.duration) item.duration = 5;
+        if (!item.effect) item.effect = i % 2 === 0 ? "cinematic" : "zoom_in";
+        if (!item.transition) item.transition = "fade";
+
         const scenePath = path.join(outputDir, jobId + "-scene-" + i + ".mp4");
         scenePaths.push(scenePath);
         tempFiles.push(scenePath);
 
-        const selectedEffect =
-          effect === "auto"
-            ? ["cinematic", "zoom_in", "zoom_out", "pan_left", "pan_right", "pulse"][i % 6]
-            : effect;
-
-        await createScene(
-          images[i].path,
-          scenePath,
-          sceneDuration,
-          selectedEffect,
-          width,
-          height,
-          fps
-        );
+        await createScene(images[i].path, scenePath, item, width, height, fps);
       }
 
       await concatScenes(scenePaths, concatFile, videoOnlyPath);
@@ -248,7 +392,6 @@ app.post(
       });
     } catch (error) {
       cleanup(tempFiles);
-
       res.status(500).json({
         ok: false,
         error: error.message
@@ -258,5 +401,5 @@ app.post(
 );
 
 app.listen(PORT, "0.0.0.0", function () {
-  console.log("VS Tools Multi Scene Video Engine running on port " + PORT);
+  console.log("VS-Tools Presentation running on port " + PORT);
 });
