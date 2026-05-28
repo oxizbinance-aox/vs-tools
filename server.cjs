@@ -12,16 +12,19 @@ console.log("SUPABASE_ANON_KEY:", !!process.env.SUPABASE_ANON_KEY);
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ||
+  process.env.VITE_SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 const SUPABASE_KEY =
   process.env.SUPABASE_ANON_KEY ||
   process.env.SUPABASE_PUBLISHABLE_KEY ||
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-  process.env.VITE_SUPABASE_ANON_KEY;
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-console.log("Supabase URL loaded:", Boolean(SUPABASE_URL));
-console.log("Supabase key loaded:", Boolean(SUPABASE_KEY));
+console.log("SUPABASE_URL loaded:", Boolean(SUPABASE_URL));
+console.log("SUPABASE_KEY loaded:", Boolean(SUPABASE_KEY));
 
 const supabase =
   SUPABASE_URL && SUPABASE_KEY
