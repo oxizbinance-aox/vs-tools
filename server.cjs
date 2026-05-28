@@ -6,6 +6,8 @@ const fs = require("fs");
 const { execFile } = require("child_process");
 const { createClient } = require("@supabase/supabase-js");
 require("dotenv").config();
+console.log("SUPABASE_URL:", process.env.SUPABASE_URL);
+console.log("SUPABASE_ANON_KEY:", !!process.env.SUPABASE_ANON_KEY);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
