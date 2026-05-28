@@ -1,376 +1,922 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>VS-Tools Presentation</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-body{font-family:Inter,Arial,sans-serif;min-height:100vh;color:white;background:radial-gradient(circle at top left,rgba(255,0,170,.35),transparent 30%),radial-gradient(circle at top right,rgba(255,255,255,.14),transparent 28%),radial-gradient(circle at bottom center,rgba(180,180,200,.18),transparent 35%),#050509;overflow-x:hidden}
-.container{width:min(1280px,calc(100% - 28px));margin:auto;padding:30px 0 100px}
-.hero{text-align:center;padding:60px 0 30px}
-.badge{display:inline-flex;padding:10px 18px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.08);color:#ffc9f7;backdrop-filter:blur(20px);animation:fadeUp .8s ease both}
-h1{margin-top:26px;font-size:clamp(48px,8vw,120px);line-height:.9;letter-spacing:-.07em;background:linear-gradient(90deg,#fff,#ff37d6,#cfd3dc,#fff);-webkit-background-clip:text;color:transparent;animation:titleIn 1s ease both}
-.subtitle{max-width:820px;margin:22px auto 0;color:rgba(255,255,255,.72);line-height:1.8;font-size:18px}
-.glass{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:30px;padding:26px;margin-top:22px;backdrop-filter:blur(20px);box-shadow:0 20px 80px rgba(255,0,180,.12)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
-label{display:block;margin-bottom:8px;font-size:13px;color:rgba(255,255,255,.7)}
-input,select,button{width:100%;border:none;outline:none;padding:14px 15px;border-radius:18px;color:white;background:rgba(10,10,18,.9);border:1px solid rgba(255,255,255,.14);margin-bottom:12px;transition:.25s}
-input:focus,select:focus{border-color:#ff37d6;box-shadow:0 0 0 4px rgba(255,0,180,.15)}
-button{cursor:pointer;font-weight:800;background:linear-gradient(135deg,#ff2bd6,rgba(255,255,255,.18))}
-button:hover{transform:translateY(-3px);box-shadow:0 18px 60px rgba(255,0,180,.35)}
-.secondary{background:rgba(255,255,255,.08)}
-.danger{background:linear-gradient(135deg,#ff2b5f,rgba(255,255,255,.12))}
-.scene{margin-top:16px;border-radius:24px;border:1px solid rgba(255,255,255,.12);padding:18px;background:rgba(255,255,255,.04)}
-.scene h3{margin-bottom:14px;color:white}
-.preview{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:20px;margin-bottom:14px;border:1px solid rgba(255,255,255,.14)}
-.hidden{display:none}
-.status{white-space:pre-wrap;color:#ffd8f7;font-size:13px;line-height:1.7}
-.projectItem{padding:14px;border-radius:18px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);margin:10px 0}
-.footer{margin-top:50px;text-align:center;color:rgba(255,255,255,.45);font-size:14px}
-@keyframes titleIn{from{opacity:0;filter:blur(20px);transform:translateY(30px) scale(.95)}to{opacity:1;filter:blur(0);transform:translateY(0) scale(1)}}
-@keyframes fadeUp{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:Arial,sans-serif;
+  background:
+  radial-gradient(circle at top left,#ff00aa33,transparent 30%),
+  radial-gradient(circle at bottom right,#ffffff11,transparent 30%),
+  #050510;
+  color:white;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+.container{
+  width:min(1400px,calc(100% - 30px));
+  margin:auto;
+  padding:30px 0 80px;
+}
+
+.hero{
+  text-align:center;
+  padding:50px 0;
+}
+
+.hero h1{
+  font-size:90px;
+  line-height:.9;
+  background:linear-gradient(90deg,#fff,#ff4fd8,#cfd3dc,#fff);
+  -webkit-background-clip:text;
+  color:transparent;
+  animation:titleIn 1s ease;
+}
+
+.hero p{
+  margin-top:20px;
+  color:#c7c7d5;
+  font-size:18px;
+}
+
+.glass{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:30px;
+  padding:25px;
+  margin-top:20px;
+  backdrop-filter:blur(20px);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:15px;
+}
+
+input,
+select,
+button,
+textarea{
+  width:100%;
+  padding:14px;
+  border:none;
+  outline:none;
+  border-radius:18px;
+  background:#11111d;
+  color:white;
+  margin-top:8px;
+}
+
+button{
+  cursor:pointer;
+  font-weight:bold;
+  background:linear-gradient(135deg,#ff00aa,#ffffff22);
+  transition:.3s;
+}
+
+button:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 40px rgba(255,0,170,.4);
+}
+
+.secondary{
+  background:#ffffff10;
+}
+
+.danger{
+  background:linear-gradient(135deg,#ff0044,#ffffff11);
+}
+
+.scene{
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:25px;
+  padding:20px;
+  margin-top:18px;
+  background:rgba(255,255,255,.03);
+}
+
+.scene img{
+  width:100%;
+  aspect-ratio:16/9;
+  object-fit:cover;
+  border-radius:20px;
+  margin-bottom:15px;
+}
+
+.hidden{
+  display:none;
+}
+
+.status{
+  white-space:pre-wrap;
+  color:#ffd4f5;
+  margin-top:10px;
+}
+
+.projectCard{
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;
+  padding:15px;
+  margin-top:12px;
+  background:rgba(255,255,255,.04);
+}
+
+.timelineHeader{
+  margin-bottom:15px;
+  font-size:22px;
+}
+
+@keyframes titleIn{
+  from{
+    opacity:0;
+    transform:translateY(30px) scale(.9);
+    filter:blur(20px);
+  }
+  to{
+    opacity:1;
+    transform:none;
+    filter:none;
+  }
+}
 </style>
 </head>
+
 <body>
+
 <div class="container">
-<section class="hero">
-<div class="badge">AI Video Presentation Engine</div>
-<h1>VS-Tools<br/>Presentation</h1>
-<p class="subtitle">Create cinematic presentation videos from images and audio. Save projects, continue editing later, and export MP4.</p>
-</section>
 
-<section class="glass" id="authBox">
-<h2 style="margin-bottom:18px">Login / Sign Up</h2>
-<div class="grid">
-<div><label>Email</label><input id="email" placeholder="you@email.com"/></div>
-<div><label>Password</label><input id="password" type="password" placeholder="password"/></div>
+<div class="hero">
+<h1>VS-Tools<br>Presentation</h1>
+<p>Professional AI cinematic slide presentation editor</p>
 </div>
-<div class="grid">
-<button onclick="signup()">Create Account</button>
-<button class="secondary" onclick="login()">Login</button>
-</div>
-<p class="status" id="authStatus">Login required. Guest mode is disabled.</p>
-</section>
 
-<section id="editor" class="hidden">
+<div class="glass" id="authBox">
+
+<h2>Login / Sign Up</h2>
+
+<div class="grid">
+
+<div>
+<label>Email</label>
+<input id="email" placeholder="email">
+</div>
+
+<div>
+<label>Password</label>
+<input id="password" type="password" placeholder="password">
+</div>
+
+</div>
+
+<div class="grid" style="margin-top:15px">
+
+<button onclick="signup()">
+Create Account
+</button>
+
+<button class="secondary" onclick="login()">
+Login
+</button>
+
+</div>
+
+<div class="status" id="authStatus">
+Login required
+</div>
+
+</div>
+
+<div id="editor" class="hidden">
+
 <div class="glass">
+
 <div class="grid">
-<div><h2>Dashboard</h2><p class="status" id="userInfo"></p></div>
-<div><button class="secondary" onclick="logout()">Logout</button></div>
+
+<div>
+<h2>Dashboard</h2>
+<div class="status" id="userInfo"></div>
 </div>
+
+<div>
+<button class="secondary" onclick="logout()">
+Logout
+</button>
+</div>
+
+</div>
+
 </div>
 
 <div class="glass">
-<h2 style="margin-bottom:18px">Projects</h2>
+
+<h2>Projects</h2>
+
 <div class="grid">
-<div><label>Project Name</label><input id="projectName" value="My Presentation"/></div>
-<div><button onclick="newProject()">New Project</button></div>
+
+<div>
+<label>Project Name</label>
+<input id="projectName" value="My Presentation">
 </div>
-<div class="grid">
-<button onclick="saveProject()">Save Project</button>
-<button class="secondary" onclick="loadProjects()">Refresh Projects</button>
+
+<div>
+<button onclick="newProject()">
+New Project
+</button>
 </div>
+
+</div>
+
+<div class="grid" style="margin-top:15px">
+
+<button onclick="saveProject()">
+Save Project
+</button>
+
+<button class="secondary" onclick="loadProjects()">
+Refresh Projects
+</button>
+
+</div>
+
 <div id="projectList"></div>
-<p class="status" id="projectStatus"></p>
+
+<div class="status" id="projectStatus"></div>
+
 </div>
 
 <div class="glass">
-<h2 style="margin-bottom:18px">Upload Assets</h2>
-<label>Images / Slides</label>
-<input id="images" type="file" accept="image/*" multiple/>
-<label>Audio / Voiceover / Music</label>
-<input id="audio" type="file" accept="audio/*"/>
+
+<h2>Upload Assets</h2>
+
+<label>Slides / Images</label>
+<input id="images" type="file" multiple accept="image/*">
+
+<label>Audio / Music</label>
+<input id="audio" type="file" accept="audio/*">
+
 <div class="grid">
-<div><label>Filename</label><input id="filename" value="vs-tools-presentation.mp4"/></div>
-<div><label>Resolution</label><select id="resolution"><option value="1280x720">HD 1280x720</option><option value="1920x1080">Full HD 1920x1080</option><option value="1080x1920">Reels 1080x1920</option></select></div>
+
+<div>
+<label>Filename</label>
+<input id="filename" value="presentation.mp4">
 </div>
-<button onclick="buildScenesFromFiles()">Create Timeline From Upload</button>
+
+<div>
+<label>Resolution</label>
+<select id="resolution">
+<option value="1280x720">HD 1280x720</option>
+<option value="1920x1080">Full HD 1920x1080</option>
+<option value="1080x1920">Reels 1080x1920</option>
+</select>
+</div>
+
+</div>
+
+<button style="margin-top:15px" onclick="buildScenes()">
+Create Timeline
+</button>
+
 </div>
 
 <div class="glass">
-<h2 style="margin-bottom:18px">Timeline Editor</h2>
+
+<div class="timelineHeader">
+Timeline Editor
+</div>
+
 <div id="scenes"></div>
+
 </div>
 
 <div class="glass">
-<h2 style="margin-bottom:18px">Render & Download</h2>
-<button onclick="renderVideo()">Render MP4</button>
-<p class="status" id="renderStatus"></p>
-</div>
-</section>
 
-<div class="footer">VS-Tools Presentation Engine</div>
+<h2>Render</h2>
+
+<button onclick="renderVideo()">
+Render MP4
+</button>
+
+<div class="status" id="renderStatus"></div>
+
+</div>
+
+</div>
+
 </div>
 
 <script>
-let supabaseClient=null;
+
 let currentUser=null;
+let accessToken=localStorage.getItem("vs_access_token")||"";
 let currentProjectId="";
 let sceneCount=0;
 let loadedAssets={images:[],audio:null};
 
+function authHeaders(){
+  return {
+    "Authorization":"Bearer "+accessToken
+  };
+}
+
 async function init(){
-  const cfg=await fetch("/api/config").then(r=>r.json());
-  if(!cfg.supabaseUrl||!cfg.supabaseAnonKey){
-    document.getElementById("authStatus").textContent="Supabase config not found. Check Railway Variables.";
+
+  if(!accessToken) return;
+
+  const r=await fetch("/api/projects",{
+    headers:authHeaders()
+  });
+
+  if(!r.ok){
+    localStorage.removeItem("vs_access_token");
+    localStorage.removeItem("vs_user_email");
     return;
   }
-  supabaseClient=window.supabase.createClient(cfg.supabaseUrl,cfg.supabaseAnonKey);
-  const {data}=await supabaseClient.auth.getSession();
-  if(data.session&&data.session.user){
-    currentUser=data.session.user;
-    showEditor();
-    loadProjects();
-  }
+
+  currentUser={
+    email:localStorage.getItem("vs_user_email")
+  };
+
+  showEditor();
+
+  const j=await r.json();
+
+  renderProjects(j.projects||[]);
 }
+
 init();
 
 function showEditor(){
+
   document.getElementById("authBox").classList.add("hidden");
+
   document.getElementById("editor").classList.remove("hidden");
-  document.getElementById("userInfo").textContent="Logged in as: "+currentUser.email;
+
+  document.getElementById("userInfo").textContent=
+  "Logged in as: "+currentUser.email;
 }
 
 async function signup(){
-  if(!supabaseClient)return;
+
   const email=document.getElementById("email").value;
   const password=document.getElementById("password").value;
-  const {error}=await supabaseClient.auth.signUp({email,password,options:{emailRedirectTo:location.origin}});
-  if(error){document.getElementById("authStatus").textContent=error.message;return;}
-  document.getElementById("authStatus").textContent="Account created. Please check your email inbox to verify your account before logging in.";
+
+  const r=await fetch("/api/auth/signup",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      email,
+      password
+    })
+  });
+
+  const j=await r.json();
+
+  document.getElementById("authStatus").textContent=
+  j.message||j.error||"Signup failed";
 }
 
 async function login(){
-  if(!supabaseClient)return;
+
   const email=document.getElementById("email").value;
   const password=document.getElementById("password").value;
-  const {data,error}=await supabaseClient.auth.signInWithPassword({email,password});
-  if(error){document.getElementById("authStatus").textContent=error.message;return;}
-  currentUser=data.user;
+
+  const r=await fetch("/api/auth/login",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      email,
+      password
+    })
+  });
+
+  const j=await r.json();
+
+  if(!j.ok){
+    document.getElementById("authStatus").textContent=
+    j.error||"Login failed";
+    return;
+  }
+
+  currentUser=j.user;
+
+  accessToken=j.session.access_token;
+
+  localStorage.setItem(
+    "vs_access_token",
+    accessToken
+  );
+
+  localStorage.setItem(
+    "vs_user_email",
+    currentUser.email
+  );
+
   showEditor();
+
   loadProjects();
 }
 
-async function logout(){
-  await supabaseClient.auth.signOut();
+function logout(){
+
+  localStorage.removeItem("vs_access_token");
+  localStorage.removeItem("vs_user_email");
+
   location.reload();
 }
 
 function newProject(){
+
   currentProjectId="";
-  loadedAssets={images:[],audio:null};
-  document.getElementById("projectName").value="My Presentation";
-  document.getElementById("scenes").innerHTML="";
+
   sceneCount=0;
-  document.getElementById("projectStatus").textContent="New project ready.";
+
+  loadedAssets={
+    images:[],
+    audio:null
+  };
+
+  document.getElementById("projectName").value=
+  "My Presentation";
+
+  document.getElementById("images").value="";
+  document.getElementById("audio").value="";
+  document.getElementById("scenes").innerHTML="";
+}
+
+function buildScenes(){
+
+  const files=document.getElementById("images").files;
+
+  const box=document.getElementById("scenes");
+
+  box.innerHTML="";
+
+  sceneCount=files.length;
+
+  for(let i=0;i<files.length;i++){
+
+    const url=URL.createObjectURL(files[i]);
+
+    box.innerHTML+=`
+    <div class="scene">
+
+      <h3>Slide ${i+1}</h3>
+
+      <img src="${url}">
+
+      <div class="grid">
+
+        <div>
+        <label>Duration</label>
+        <input id="duration_${i}" value="5">
+        </div>
+
+        <div>
+        <label>Transition</label>
+        <select id="transition_${i}">
+          <option>fade</option>
+          <option>fade_in</option>
+          <option>fade_out</option>
+          <option>flash</option>
+          <option>dark</option>
+        </select>
+        </div>
+
+        <div>
+        <label>Effect</label>
+        <select id="effect_${i}">
+          <option>cinematic</option>
+          <option>manual_zoom</option>
+          <option>zoom_in</option>
+          <option>zoom_out</option>
+          <option>pan_left</option>
+          <option>pan_right</option>
+          <option>pan_up</option>
+          <option>pan_down</option>
+          <option>pulse</option>
+          <option>rotate_zoom</option>
+          <option>blur_zoom</option>
+        </select>
+        </div>
+
+      </div>
+
+      <div class="grid">
+
+        <div>
+        <label>Title</label>
+        <input id="title_${i}">
+        </div>
+
+        <div>
+        <label>Subtitle</label>
+        <input id="subtitle_${i}">
+        </div>
+
+      </div>
+
+      <div class="grid">
+
+        <div>
+        <label>Zoom Start</label>
+        <input id="zoomStart_${i}" value="1">
+        </div>
+
+        <div>
+        <label>Zoom End</label>
+        <input id="zoomEnd_${i}" value="1.2">
+        </div>
+
+        <div>
+        <label>Focus X</label>
+        <input id="focusX_${i}" value="0.5">
+        </div>
+
+        <div>
+        <label>Focus Y</label>
+        <input id="focusY_${i}" value="0.5">
+        </div>
+
+      </div>
+
+    </div>
+    `;
+  }
 }
 
 function getTimeline(){
-  const timeline=[];
+
+  const arr=[];
+
   for(let i=0;i<sceneCount;i++){
-    timeline.push({
+
+    arr.push({
       duration:Number(document.getElementById("duration_"+i).value||5),
-      effect:document.getElementById("effect_"+i).value,
       transition:document.getElementById("transition_"+i).value,
+      effect:document.getElementById("effect_"+i).value,
       title:document.getElementById("title_"+i).value,
       subtitle:document.getElementById("subtitle_"+i).value,
-      title_position:document.getElementById("title_position_"+i).value,
       zoomStart:Number(document.getElementById("zoomStart_"+i).value||1),
-      zoomEnd:Number(document.getElementById("zoomEnd_"+i).value||1.25),
+      zoomEnd:Number(document.getElementById("zoomEnd_"+i).value||1.2),
       focusX:Number(document.getElementById("focusX_"+i).value||0.5),
       focusY:Number(document.getElementById("focusY_"+i).value||0.5)
     });
   }
-  return timeline;
-}
 
-function buildSceneCard(i,name,url,item){
-  return `
-  <div class="scene">
-    <h3>Slide ${i+1}: ${name}</h3>
-    <img class="preview" src="${url}" />
-    <div class="grid">
-      <div><label>Duration</label><input id="duration_${i}" value="${item.duration||5}"/></div>
-      <div><label>Transition</label><select id="transition_${i}">
-        ${["fade","fade_in","fade_out","flash","dark","none"].map(v=>`<option value="${v}" ${item.transition===v?"selected":""}>${v}</option>`).join("")}
-      </select></div>
-      <div><label>Effect</label><select id="effect_${i}">
-        ${["cinematic","manual_zoom","zoom_in","zoom_out","pan_left","pan_right","pan_up","pan_down","pulse","rotate_zoom","blur_zoom","none"].map(v=>`<option value="${v}" ${item.effect===v?"selected":""}>${v}</option>`).join("")}
-      </select></div>
-    </div>
-    <div class="grid">
-      <div><label>Title</label><input id="title_${i}" value="${item.title||""}"/></div>
-      <div><label>Subtitle</label><input id="subtitle_${i}" value="${item.subtitle||""}"/></div>
-      <div><label>Title Position</label><select id="title_position_${i}">
-        ${["center","top","bottom"].map(v=>`<option value="${v}" ${item.title_position===v?"selected":""}>${v}</option>`).join("")}
-      </select></div>
-    </div>
-    <div class="grid">
-      <div><label>Zoom Start</label><input id="zoomStart_${i}" value="${item.zoomStart||1}"/></div>
-      <div><label>Zoom End</label><input id="zoomEnd_${i}" value="${item.zoomEnd||1.25}"/></div>
-      <div><label>Focus X</label><input id="focusX_${i}" value="${item.focusX||0.5}"/></div>
-      <div><label>Focus Y</label><input id="focusY_${i}" value="${item.focusY||0.5}"/></div>
-    </div>
-  </div>`;
-}
-
-function buildScenesFromFiles(){
-  const files=document.getElementById("images").files;
-  const box=document.getElementById("scenes");
-  box.innerHTML="";
-  sceneCount=files.length;
-  loadedAssets.images=[];
-  for(let i=0;i<files.length;i++){
-    const url=URL.createObjectURL(files[i]);
-    loadedAssets.images.push({file:files[i],url,name:files[i].name});
-    box.innerHTML+=buildSceneCard(i,files[i].name,url,{duration:5,effect:"cinematic",transition:"fade",title_position:"center"});
-  }
-}
-
-async function uploadAsset(file,path){
-  const {error}=await supabaseClient.storage.from("project-assets").upload(path,file,{upsert:true});
-  if(error)throw error;
-  const {data}=supabaseClient.storage.from("project-assets").getPublicUrl(path);
-  return {path,url:data.publicUrl,name:file.name,type:file.type};
+  return arr;
 }
 
 async function saveProject(){
-  try{
-    if(!currentUser){alert("Login required");return;}
-    document.getElementById("projectStatus").textContent="Saving project and uploading assets...";
-    const projectId=currentProjectId||crypto.randomUUID();
-    const timeline=getTimeline();
-    const assets={images:[],audio:null};
 
-    const files=document.getElementById("images").files;
-    if(files.length){
-      for(let i=0;i<files.length;i++){
-        const path=currentUser.id+"/"+projectId+"/images/"+i+"-"+files[i].name;
-        assets.images.push(await uploadAsset(files[i],path));
-      }
-    }else{
-      assets.images=loadedAssets.images||[];
-    }
+  const fd=new FormData();
 
-    const audioFile=document.getElementById("audio").files[0];
-    if(audioFile){
-      const path=currentUser.id+"/"+projectId+"/audio/"+audioFile.name;
-      assets.audio=await uploadAsset(audioFile,path);
-    }else{
-      assets.audio=loadedAssets.audio||null;
-    }
+  fd.append(
+    "projectId",
+    currentProjectId
+  );
 
-    const data={
-      filename:document.getElementById("filename").value,
-      resolution:document.getElementById("resolution").value,
-      timeline,
-      assets
-    };
+  fd.append(
+    "name",
+    document.getElementById("projectName").value
+  );
 
-    const {error}=await supabaseClient.from("projects").upsert({
-      id:projectId,
-      user_id:currentUser.id,
-      name:document.getElementById("projectName").value||"Untitled Project",
-      data,
-      updated_at:new Date().toISOString()
-    });
+  fd.append(
+    "filename",
+    document.getElementById("filename").value
+  );
 
-    if(error)throw error;
-    currentProjectId=projectId;
-    loadedAssets=assets;
-    document.getElementById("projectStatus").textContent="Project saved.";
-    loadProjects();
-  }catch(e){
-    document.getElementById("projectStatus").textContent=e.message;
+  fd.append(
+    "resolution",
+    document.getElementById("resolution").value
+  );
+
+  fd.append(
+    "timeline",
+    JSON.stringify(getTimeline())
+  );
+
+  fd.append(
+    "oldAssets",
+    JSON.stringify(loadedAssets)
+  );
+
+  const images=document.getElementById("images").files;
+
+  for(let i=0;i<images.length;i++){
+    fd.append("images",images[i]);
   }
+
+  const audio=document.getElementById("audio").files[0];
+
+  if(audio){
+    fd.append("audio",audio);
+  }
+
+  document.getElementById("projectStatus").textContent=
+  "Saving project...";
+
+  const r=await fetch("/api/projects/save",{
+    method:"POST",
+    headers:authHeaders(),
+    body:fd
+  });
+
+  const j=await r.json();
+
+  if(!j.ok){
+
+    document.getElementById("projectStatus").textContent=
+    j.error;
+
+    return;
+  }
+
+  currentProjectId=j.project.id;
+
+  loadedAssets=j.project.data.assets;
+
+  document.getElementById("projectStatus").textContent=
+  "Project saved";
+
+  loadProjects();
 }
 
 async function loadProjects(){
-  const {data,error}=await supabaseClient.from("projects").select("*").order("updated_at",{ascending:false});
-  if(error){document.getElementById("projectStatus").textContent=error.message;return;}
+
+  const r=await fetch("/api/projects",{
+    headers:authHeaders()
+  });
+
+  const j=await r.json();
+
+  renderProjects(j.projects||[]);
+}
+
+function renderProjects(projects){
+
   const box=document.getElementById("projectList");
+
   box.innerHTML="";
-  data.forEach(p=>{
-    box.innerHTML+=`<div class="projectItem"><b>${p.name}</b><br/><small>${p.updated_at}</small><div class="grid"><button onclick='openProject(${JSON.stringify(p).replace(/'/g,"&apos;")})'>Open</button><button class="danger" onclick='deleteProject("${p.id}")'>Delete</button></div></div>`;
+
+  projects.forEach((p,index)=>{
+
+    window["project_"+index]=p;
+
+    box.innerHTML+=`
+    <div class="projectCard">
+
+      <b>${p.name}</b>
+
+      <div style="margin-top:10px">
+      ${p.updated_at}
+      </div>
+
+      <div class="grid" style="margin-top:15px">
+
+        <button onclick="openProject(window.project_${index})">
+        Open
+        </button>
+
+        <button class="danger" onclick="deleteProject('${p.id}')">
+        Delete
+        </button>
+
+      </div>
+
+    </div>
+    `;
   });
 }
 
 function openProject(p){
+
   currentProjectId=p.id;
-  document.getElementById("projectName").value=p.name;
-  document.getElementById("filename").value=p.data.filename||"result.mp4";
-  document.getElementById("resolution").value=p.data.resolution||"1280x720";
-  loadedAssets=p.data.assets||{images:[],audio:null};
+
+  loadedAssets=p.data.assets||{
+    images:[],
+    audio:null
+  };
+
+  document.getElementById("projectName").value=
+  p.name;
+
+  document.getElementById("filename").value=
+  p.data.filename||"presentation.mp4";
+
+  document.getElementById("resolution").value=
+  p.data.resolution||"1280x720";
+
   const timeline=p.data.timeline||[];
+
   const box=document.getElementById("scenes");
+
   box.innerHTML="";
+
   sceneCount=loadedAssets.images.length;
+
   for(let i=0;i<loadedAssets.images.length;i++){
-    box.innerHTML+=buildSceneCard(i,loadedAssets.images[i].name,loadedAssets.images[i].url,timeline[i]||{});
+
+    const item=timeline[i]||{};
+
+    box.innerHTML+=`
+    <div class="scene">
+
+      <h3>Slide ${i+1}</h3>
+
+      <img src="${loadedAssets.images[i].url}">
+
+      <div class="grid">
+
+        <div>
+        <label>Duration</label>
+        <input id="duration_${i}" value="${item.duration||5}">
+        </div>
+
+        <div>
+        <label>Transition</label>
+        <select id="transition_${i}">
+          <option ${item.transition==="fade"?"selected":""}>fade</option>
+          <option ${item.transition==="fade_in"?"selected":""}>fade_in</option>
+          <option ${item.transition==="fade_out"?"selected":""}>fade_out</option>
+          <option ${item.transition==="flash"?"selected":""}>flash</option>
+          <option ${item.transition==="dark"?"selected":""}>dark</option>
+        </select>
+        </div>
+
+        <div>
+        <label>Effect</label>
+        <select id="effect_${i}">
+          <option ${item.effect==="cinematic"?"selected":""}>cinematic</option>
+          <option ${item.effect==="manual_zoom"?"selected":""}>manual_zoom</option>
+          <option ${item.effect==="zoom_in"?"selected":""}>zoom_in</option>
+          <option ${item.effect==="zoom_out"?"selected":""}>zoom_out</option>
+          <option ${item.effect==="pan_left"?"selected":""}>pan_left</option>
+          <option ${item.effect==="pan_right"?"selected":""}>pan_right</option>
+          <option ${item.effect==="pan_up"?"selected":""}>pan_up</option>
+          <option ${item.effect==="pan_down"?"selected":""}>pan_down</option>
+          <option ${item.effect==="pulse"?"selected":""}>pulse</option>
+          <option ${item.effect==="rotate_zoom"?"selected":""}>rotate_zoom</option>
+          <option ${item.effect==="blur_zoom"?"selected":""}>blur_zoom</option>
+        </select>
+        </div>
+
+      </div>
+
+    </div>
+    `;
   }
-  document.getElementById("projectStatus").textContent="Project loaded.";
 }
 
 async function deleteProject(id){
-  if(!confirm("Delete this project?"))return;
-  const {error}=await supabaseClient.from("projects").delete().eq("id",id);
-  if(error){alert(error.message);return;}
+
+  if(!confirm("Delete project?")){
+    return;
+  }
+
+  await fetch("/api/projects/"+id,{
+    method:"DELETE",
+    headers:authHeaders()
+  });
+
   loadProjects();
 }
 
 async function urlToFile(url,name,type){
+
   const r=await fetch(url);
+
   const b=await r.blob();
-  return new File([b],name,{type:type||b.type});
+
+  return new File([b],name,{
+    type:type||b.type
+  });
 }
 
 async function renderVideo(){
-  try{
-    const fd=new FormData();
-    const localFiles=document.getElementById("images").files;
 
-    if(localFiles.length){
-      for(let i=0;i<localFiles.length;i++)fd.append("images",localFiles[i]);
-    }else if(loadedAssets.images&&loadedAssets.images.length){
-      for(const img of loadedAssets.images){
-        fd.append("images",await urlToFile(img.url,img.name,img.type));
+  try{
+
+    const fd=new FormData();
+
+    const localImages=document.getElementById("images").files;
+
+    if(localImages.length){
+
+      for(let i=0;i<localImages.length;i++){
+        fd.append("images",localImages[i]);
       }
+
     }else{
-      alert("No images found");
-      return;
+
+      for(const img of loadedAssets.images){
+
+        fd.append(
+          "images",
+          await urlToFile(
+            img.url,
+            img.name,
+            img.type
+          )
+        );
+      }
     }
 
     const audioLocal=document.getElementById("audio").files[0];
-    if(audioLocal)fd.append("audio",audioLocal);
-    else if(loadedAssets.audio)fd.append("audio",await urlToFile(loadedAssets.audio.url,loadedAssets.audio.name,loadedAssets.audio.type));
 
-    const resolution=document.getElementById("resolution").value.split("x");
-    fd.append("width",resolution[0]);
-    fd.append("height",resolution[1]);
+    if(audioLocal){
+
+      fd.append("audio",audioLocal);
+
+    }else if(loadedAssets.audio){
+
+      fd.append(
+        "audio",
+        await urlToFile(
+          loadedAssets.audio.url,
+          loadedAssets.audio.name,
+          loadedAssets.audio.type
+        )
+      );
+    }
+
+    const res=document.getElementById("resolution").value.split("x");
+
+    fd.append("width",res[0]);
+    fd.append("height",res[1]);
     fd.append("fps","30");
-    fd.append("filename",document.getElementById("filename").value||"result.mp4");
-    fd.append("timeline",JSON.stringify(getTimeline()));
 
-    document.getElementById("renderStatus").textContent="Rendering MP4...";
-    const response=await fetch("/api/video/timeline",{method:"POST",body:fd});
-    if(!response.ok){document.getElementById("renderStatus").textContent=await response.text();return;}
+    fd.append(
+      "filename",
+      document.getElementById("filename").value
+    );
+
+    fd.append(
+      "timeline",
+      JSON.stringify(getTimeline())
+    );
+
+    document.getElementById("renderStatus").textContent=
+    "Rendering MP4...";
+
+    const response=await fetch("/api/video/timeline",{
+      method:"POST",
+      body:fd
+    });
+
+    if(!response.ok){
+
+      document.getElementById("renderStatus").textContent=
+      await response.text();
+
+      return;
+    }
 
     const blob=await response.blob();
+
     const url=URL.createObjectURL(blob);
+
     const a=document.createElement("a");
+
     a.href=url;
-    a.download=document.getElementById("filename").value||"result.mp4";
+
+    a.download=
+    document.getElementById("filename").value||
+    "presentation.mp4";
+
     document.body.appendChild(a);
+
     a.click();
+
     a.remove();
+
     URL.revokeObjectURL(url);
-    document.getElementById("renderStatus").textContent="Done. MP4 downloaded.";
+
+    document.getElementById("renderStatus").textContent=
+    "Render complete";
+
   }catch(e){
-    document.getElementById("renderStatus").textContent=e.message;
+
+    document.getElementById("renderStatus").textContent=
+    e.message;
   }
 }
+
 </script>
+
 </body>
 </html>
