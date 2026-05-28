@@ -3,11 +3,32 @@ const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const crypto = require("crypto");
 const { execFile } = require("child_process");
+const { createClient } = require("@supabase/supabase-js");
 require("dotenv").config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+const SUPABASE_URL = process.env.SUPABASE_URL || "";
+const SUPABASE_ANON_KEY =
+  process.env.SUPABASE_ANON_KEY ||
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
+  "";
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+const supabaseAuth =
+  SUPABASE_URL && SUPABASE_ANON_KEY
+    ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+const supabaseAdmin =
+  SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY
+    ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    : null;
 
 app.use(cors());
 app.use(express.json({ limit: "500mb" }));
@@ -22,7 +43,10 @@ if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 
 const upload = multer({
   dest: uploadDir,
-  limits: { fileSize: 500 * 1024 * 1024, files: 160 }
+  limits: {
+    fileSize: 500 * 1024 * 1024,
+    files: 200
+  }
 });
 
 function safeName(name) {
@@ -33,6 +57,12 @@ function clampNumber(value, min, max, fallback) {
   const n = Number(value);
   if (!Number.isFinite(n)) return fallback;
   return Math.max(min, Math.min(max, n));
+}
+
+function cleanup(paths) {
+  paths.forEach(function (p) {
+    if (p && fs.existsSync(p)) fs.unlink(p, function () {});
+  });
 }
 
 function run(cmd, args) {
@@ -196,35 +226,212 @@ async function mergeAudio(videoOnlyPath, audioPath, outputPath) {
   ]);
 }
 
-function cleanup(paths) {
-  paths.forEach(function (p) {
-    if (p && fs.existsSync(p)) fs.unlink(p, function () {});
-  });
+async function getUserFromAuth(req) {
+  if (!supabaseAuth) throw new Error("Supabase auth is not configured");
+  const header = req.headers.authorization || "";
+  const token = header.replace("Bearer ", "");
+  if (!token) throw new Error("Missing auth token");
+
+  const result = await supabaseAuth.auth.getUser(token);
+  if (result.error || !result.data.user) throw new Error("Invalid auth token");
+  return { user: result.data.user, token };
 }
 
-app.get("/api/config", function (req, res) {
-  res.json({
-    supabaseUrl: process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "",
-    supabaseAnonKey:
-      process.env.SUPABASE_ANON_KEY ||
-      process.env.SUPABASE_PUBLISHABLE_KEY ||
-      process.env.VITE_SUPABASE_ANON_KEY ||
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
-      ""
-  });
+async function uploadToStorage(localPath, storagePath, contentType) {
+  if (!supabaseAdmin) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");
+
+  const buffer = fs.readFileSync(localPath);
+
+  const result = await supabaseAdmin.storage
+    .from("project-assets")
+    .upload(storagePath, buffer, {
+      upsert: true,
+      contentType: contentType || "application/octet-stream"
+    });
+
+  if (result.error) throw result.error;
+
+  const publicUrl = supabaseAdmin.storage
+    .from("project-assets")
+    .getPublicUrl(storagePath).data.publicUrl;
+
+  return publicUrl;
+}
+
+app.post("/api/auth/signup", async function (req, res) {
+  try {
+    if (!supabaseAuth) return res.status(500).json({ ok: false, error: "Supabase is not configured" });
+
+    const email = req.body.email;
+    const password = req.body.password;
+
+    const result = await supabaseAuth.auth.signUp({
+      email,
+      password,
+      options: { emailRedirectTo: req.headers.origin || "" }
+    });
+
+    if (result.error) return res.status(400).json({ ok: false, error: result.error.message });
+
+    res.json({
+      ok: true,
+      message: "Account created. Please check your email inbox to verify your account before logging in.",
+      user: result.data.user
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.post("/api/auth/login", async function (req, res) {
+  try {
+    if (!supabaseAuth) return res.status(500).json({ ok: false, error: "Supabase is not configured" });
+
+    const email = req.body.email;
+    const password = req.body.password;
+
+    const result = await supabaseAuth.auth.signInWithPassword({ email, password });
+
+    if (result.error) return res.status(400).json({ ok: false, error: result.error.message });
+
+    res.json({
+      ok: true,
+      user: result.data.user,
+      session: result.data.session
+    });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
+app.get("/api/projects", async function (req, res) {
+  try {
+    const auth = await getUserFromAuth(req);
+
+    if (!supabaseAdmin) return res.status(500).json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured" });
+
+    const result = await supabaseAdmin
+      .from("projects")
+      .select("*")
+      .eq("user_id", auth.user.id)
+      .order("updated_at", { ascending: false });
+
+    if (result.error) throw result.error;
+
+    res.json({ ok: true, projects: result.data });
+  } catch (error) {
+    res.status(401).json({ ok: false, error: error.message });
+  }
+});
+
+app.post(
+  "/api/projects/save",
+  upload.fields([
+    { name: "images", maxCount: 150 },
+    { name: "audio", maxCount: 1 }
+  ]),
+  async function (req, res) {
+    const tempFiles = [];
+
+    try {
+      const auth = await getUserFromAuth(req);
+
+      if (!supabaseAdmin) return res.status(500).json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured" });
+
+      const projectId = req.body.projectId || crypto.randomUUID();
+      const name = req.body.name || "Untitled Project";
+      const oldAssets = JSON.parse(req.body.oldAssets || '{"images":[],"audio":null}');
+      const timeline = JSON.parse(req.body.timeline || "[]");
+
+      const assets = {
+        images: oldAssets.images || [],
+        audio: oldAssets.audio || null
+      };
+
+      const images = req.files && req.files.images ? req.files.images : [];
+      const audio = req.files && req.files.audio ? req.files.audio[0] : null;
+
+      if (images.length > 0) {
+        assets.images = [];
+        for (let i = 0; i < images.length; i++) {
+          tempFiles.push(images[i].path);
+          const storagePath = auth.user.id + "/" + projectId + "/images/" + i + "-" + images[i].originalname;
+          const url = await uploadToStorage(images[i].path, storagePath, images[i].mimetype);
+          assets.images.push({
+            name: images[i].originalname,
+            path: storagePath,
+            url: url,
+            type: images[i].mimetype
+          });
+        }
+      }
+
+      if (audio) {
+        tempFiles.push(audio.path);
+        const storagePath = auth.user.id + "/" + projectId + "/audio/" + audio.originalname;
+        const url = await uploadToStorage(audio.path, storagePath, audio.mimetype);
+        assets.audio = {
+          name: audio.originalname,
+          path: storagePath,
+          url: url,
+          type: audio.mimetype
+        };
+      }
+
+      const data = {
+        filename: req.body.filename || "result.mp4",
+        resolution: req.body.resolution || "1280x720",
+        timeline: timeline,
+        assets: assets
+      };
+
+      const result = await supabaseAdmin.from("projects").upsert({
+        id: projectId,
+        user_id: auth.user.id,
+        name: name,
+        data: data,
+        updated_at: new Date().toISOString()
+      }).select("*").single();
+
+      if (result.error) throw result.error;
+
+      cleanup(tempFiles);
+
+      res.json({ ok: true, project: result.data });
+    } catch (error) {
+      cleanup(tempFiles);
+      res.status(500).json({ ok: false, error: error.message });
+    }
+  }
+);
+
+app.delete("/api/projects/:id", async function (req, res) {
+  try {
+    const auth = await getUserFromAuth(req);
+
+    if (!supabaseAdmin) return res.status(500).json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured" });
+
+    const result = await supabaseAdmin
+      .from("projects")
+      .delete()
+      .eq("id", req.params.id)
+      .eq("user_id", auth.user.id);
+
+    if (result.error) throw result.error;
+
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
 });
 
 app.get("/api/health", function (req, res) {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || "";
-  const key = process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "";
-
   res.json({
     ok: true,
     engine: "VS-Tools Presentation Final",
     dashboard: true,
-    auth: Boolean(url && key),
-    saveProjects: true,
-    storageAssets: true,
+    auth: Boolean(supabaseAuth),
+    serviceRole: Boolean(supabaseAdmin),
     output: "mp4",
     endpoint: "/api/video/timeline",
     timestamp: new Date().toISOString()
