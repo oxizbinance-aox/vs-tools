@@ -11,14 +11,24 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
+const SUPABASE_URL =
+  process.env.SUPABASE_URL ||
+  process.env.VITE_SUPABASE_URL ||
+  process.env.NEXT_PUBLIC_SUPABASE_URL ||
+  "";
+
 const SUPABASE_ANON_KEY =
   process.env.SUPABASE_ANON_KEY ||
   process.env.SUPABASE_PUBLISHABLE_KEY ||
   process.env.VITE_SUPABASE_ANON_KEY ||
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ||
   "";
-const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+
+const SUPABASE_SERVICE_ROLE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY ||
+  process.env.SERVICE_ROLE_KEY ||
+  process.env.SUPABASE_SECRET_KEY ||
+  "";
 
 const supabaseAuth =
   SUPABASE_URL && SUPABASE_ANON_KEY
@@ -101,10 +111,28 @@ function buildMotionFilter(item, width, height, fps) {
   const focusX = clampNumber(item.focusX, 0, 1, 0.5);
   const focusY = clampNumber(item.focusY, 0, 1, 0.5);
 
-  const prep = "scale=" + width + ":" + height + ":force_original_aspect_ratio=increase,crop=" + width + ":" + height;
+  const prep =
+    "scale=" +
+    width +
+    ":" +
+    height +
+    ":force_original_aspect_ratio=increase,crop=" +
+    width +
+    ":" +
+    height;
 
   if (effect === "none") {
-    return "scale=" + width + ":" + height + ":force_original_aspect_ratio=decrease,pad=" + width + ":" + height + ":(ow-iw)/2:(oh-ih)/2,format=yuv420p";
+    return (
+      "scale=" +
+      width +
+      ":" +
+      height +
+      ":force_original_aspect_ratio=decrease,pad=" +
+      width +
+      ":" +
+      height +
+      ":(ow-iw)/2:(oh-ih)/2,format=yuv420p"
+    );
   }
 
   let zoomExpr = "'min(1.16\\,1+0.16*on/" + totalFrames + ")'";
@@ -139,10 +167,28 @@ function buildMotionFilter(item, width, height, fps) {
     zoomExpr = "'min(1.20\\,1+0.20*on/" + totalFrames + ")'";
   }
 
-  let filter = prep + ",zoompan=z=" + zoomExpr + ":x=" + xExpr + ":y=" + yExpr + ":d=1:s=" + width + "x" + height + ":fps=" + fps;
+  let filter =
+    prep +
+    ",zoompan=z=" +
+    zoomExpr +
+    ":x=" +
+    xExpr +
+    ":y=" +
+    yExpr +
+    ":d=1:s=" +
+    width +
+    "x" +
+    height +
+    ":fps=" +
+    fps;
 
-  if (effect === "rotate_zoom") filter += ",rotate='0.006*sin(n/30)':fillcolor=black";
-  if (effect === "blur_zoom") filter += ",boxblur=2:1,unsharp=5:5:0.8";
+  if (effect === "rotate_zoom") {
+    filter += ",rotate='0.006*sin(n/30)':fillcolor=black";
+  }
+
+  if (effect === "blur_zoom") {
+    filter += ",boxblur=2:1,unsharp=5:5:0.8";
+  }
 
   filter += ",format=yuv420p";
   return filter;
@@ -154,15 +200,27 @@ function applyTransitionAndText(filter, item, width, duration) {
   const subtitle = escapeText(item.subtitle || "");
 
   if (transition === "fade") {
-    filter += ",fade=t=in:st=0:d=0.35,fade=t=out:st=" + Math.max(0.1, duration - 0.4).toFixed(2) + ":d=0.35";
+    filter +=
+      ",fade=t=in:st=0:d=0.35,fade=t=out:st=" +
+      Math.max(0.1, duration - 0.4).toFixed(2) +
+      ":d=0.35";
   } else if (transition === "fade_in") {
     filter += ",fade=t=in:st=0:d=0.45";
   } else if (transition === "fade_out") {
-    filter += ",fade=t=out:st=" + Math.max(0.1, duration - 0.5).toFixed(2) + ":d=0.45";
+    filter +=
+      ",fade=t=out:st=" +
+      Math.max(0.1, duration - 0.5).toFixed(2) +
+      ":d=0.45";
   } else if (transition === "flash") {
-    filter += ",fade=t=in:st=0:d=0.15:color=white,fade=t=out:st=" + Math.max(0.1, duration - 0.2).toFixed(2) + ":d=0.15:color=white";
+    filter +=
+      ",fade=t=in:st=0:d=0.15:color=white,fade=t=out:st=" +
+      Math.max(0.1, duration - 0.2).toFixed(2) +
+      ":d=0.15:color=white";
   } else if (transition === "dark") {
-    filter += ",fade=t=in:st=0:d=0.35:color=black,fade=t=out:st=" + Math.max(0.1, duration - 0.4).toFixed(2) + ":d=0.35:color=black";
+    filter +=
+      ",fade=t=in:st=0:d=0.35:color=black,fade=t=out:st=" +
+      Math.max(0.1, duration - 0.4).toFixed(2) +
+      ":d=0.35:color=black";
   }
 
   const titleSize = Math.max(34, Math.floor(width / 18));
@@ -180,11 +238,25 @@ function applyTransitionAndText(filter, item, width, duration) {
   }
 
   if (title.length > 0) {
-    filter += ",drawtext=text='" + title + "':fontcolor=white:fontsize=" + titleSize + ":x=(w-text_w)/2:y=" + titleY + ":shadowcolor=black@0.95:shadowx=4:shadowy=4:borderw=2:bordercolor=black@0.65";
+    filter +=
+      ",drawtext=text='" +
+      title +
+      "':fontcolor=white:fontsize=" +
+      titleSize +
+      ":x=(w-text_w)/2:y=" +
+      titleY +
+      ":shadowcolor=black@0.95:shadowx=4:shadowy=4:borderw=2:bordercolor=black@0.65";
   }
 
   if (subtitle.length > 0) {
-    filter += ",drawtext=text='" + subtitle + "':fontcolor=white@0.9:fontsize=" + subtitleSize + ":x=(w-text_w)/2:y=" + subtitleY + ":shadowcolor=black@0.9:shadowx=3:shadowy=3:borderw=1:bordercolor=black@0.55";
+    filter +=
+      ",drawtext=text='" +
+      subtitle +
+      "':fontcolor=white@0.9:fontsize=" +
+      subtitleSize +
+      ":x=(w-text_w)/2:y=" +
+      subtitleY +
+      ":shadowcolor=black@0.9:shadowx=3:shadowy=3:borderw=1:bordercolor=black@0.55";
   }
 
   return filter;
@@ -196,21 +268,48 @@ async function createScene(imagePath, scenePath, item, width, height, fps) {
   filter = applyTransitionAndText(filter, item, width, duration);
 
   await run("ffmpeg", [
-    "-y", "-loop", "1", "-framerate", String(fps), "-t", String(duration),
-    "-i", imagePath, "-vf", filter, "-an", "-c:v", "libx264",
-    "-preset", "veryfast", "-pix_fmt", "yuv420p", scenePath
+    "-y",
+    "-loop",
+    "1",
+    "-framerate",
+    String(fps),
+    "-t",
+    String(duration),
+    "-i",
+    imagePath,
+    "-vf",
+    filter,
+    "-an",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "veryfast",
+    "-pix_fmt",
+    "yuv420p",
+    scenePath
   ]);
 }
 
 async function concatScenes(scenePaths, concatFile, videoOnlyPath) {
-  const list = scenePaths.map(function (p) {
-    return "file '" + p.replace(/\\/g, "/") + "'";
-  }).join("\n");
+  const list = scenePaths
+    .map(function (p) {
+      return "file '" + p.replace(/\\/g, "/") + "'";
+    })
+    .join("\n");
 
   fs.writeFileSync(concatFile, list);
 
   await run("ffmpeg", [
-    "-y", "-f", "concat", "-safe", "0", "-i", concatFile, "-c", "copy", videoOnlyPath
+    "-y",
+    "-f",
+    "concat",
+    "-safe",
+    "0",
+    "-i",
+    concatFile,
+    "-c",
+    "copy",
+    videoOnlyPath
   ]);
 }
 
@@ -221,24 +320,48 @@ async function mergeAudio(videoOnlyPath, audioPath, outputPath) {
   }
 
   await run("ffmpeg", [
-    "-y", "-i", videoOnlyPath, "-i", audioPath, "-c:v", "copy",
-    "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", outputPath
+    "-y",
+    "-i",
+    videoOnlyPath,
+    "-i",
+    audioPath,
+    "-c:v",
+    "copy",
+    "-c:a",
+    "aac",
+    "-b:a",
+    "192k",
+    "-shortest",
+    "-movflags",
+    "+faststart",
+    outputPath
   ]);
 }
 
 async function getUserFromAuth(req) {
   if (!supabaseAuth) throw new Error("Supabase auth is not configured");
+
   const header = req.headers.authorization || "";
   const token = header.replace("Bearer ", "");
+
   if (!token) throw new Error("Missing auth token");
 
   const result = await supabaseAuth.auth.getUser(token);
-  if (result.error || !result.data.user) throw new Error("Invalid auth token");
-  return { user: result.data.user, token };
+
+  if (result.error || !result.data.user) {
+    throw new Error("Invalid auth token");
+  }
+
+  return {
+    user: result.data.user,
+    token: token
+  };
 }
 
 async function uploadToStorage(localPath, storagePath, contentType) {
-  if (!supabaseAdmin) throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");
+  if (!supabaseAdmin) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY is not configured");
+  }
 
   const buffer = fs.readFileSync(localPath);
 
@@ -251,27 +374,37 @@ async function uploadToStorage(localPath, storagePath, contentType) {
 
   if (result.error) throw result.error;
 
-  const publicUrl = supabaseAdmin.storage
+  return supabaseAdmin.storage
     .from("project-assets")
     .getPublicUrl(storagePath).data.publicUrl;
-
-  return publicUrl;
 }
 
 app.post("/api/auth/signup", async function (req, res) {
   try {
-    if (!supabaseAuth) return res.status(500).json({ ok: false, error: "Supabase is not configured" });
+    if (!supabaseAuth) {
+      return res.status(500).json({
+        ok: false,
+        error: "Supabase is not configured"
+      });
+    }
 
     const email = req.body.email;
     const password = req.body.password;
 
     const result = await supabaseAuth.auth.signUp({
-      email,
-      password,
-      options: { emailRedirectTo: req.headers.origin || "" }
+      email: email,
+      password: password,
+      options: {
+        emailRedirectTo: req.headers.origin || ""
+      }
     });
 
-    if (result.error) return res.status(400).json({ ok: false, error: result.error.message });
+    if (result.error) {
+      return res.status(400).json({
+        ok: false,
+        error: result.error.message
+      });
+    }
 
     res.json({
       ok: true,
@@ -279,20 +412,36 @@ app.post("/api/auth/signup", async function (req, res) {
       user: result.data.user
     });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
   }
 });
 
 app.post("/api/auth/login", async function (req, res) {
   try {
-    if (!supabaseAuth) return res.status(500).json({ ok: false, error: "Supabase is not configured" });
+    if (!supabaseAuth) {
+      return res.status(500).json({
+        ok: false,
+        error: "Supabase is not configured"
+      });
+    }
 
     const email = req.body.email;
     const password = req.body.password;
 
-    const result = await supabaseAuth.auth.signInWithPassword({ email, password });
+    const result = await supabaseAuth.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
 
-    if (result.error) return res.status(400).json({ ok: false, error: result.error.message });
+    if (result.error) {
+      return res.status(400).json({
+        ok: false,
+        error: result.error.message
+      });
+    }
 
     res.json({
       ok: true,
@@ -300,7 +449,10 @@ app.post("/api/auth/login", async function (req, res) {
       session: result.data.session
     });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
   }
 });
 
@@ -308,7 +460,12 @@ app.get("/api/projects", async function (req, res) {
   try {
     const auth = await getUserFromAuth(req);
 
-    if (!supabaseAdmin) return res.status(500).json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured" });
+    if (!supabaseAdmin) {
+      return res.status(500).json({
+        ok: false,
+        error: "SUPABASE_SERVICE_ROLE_KEY is not configured"
+      });
+    }
 
     const result = await supabaseAdmin
       .from("projects")
@@ -318,9 +475,15 @@ app.get("/api/projects", async function (req, res) {
 
     if (result.error) throw result.error;
 
-    res.json({ ok: true, projects: result.data });
+    res.json({
+      ok: true,
+      projects: result.data
+    });
   } catch (error) {
-    res.status(401).json({ ok: false, error: error.message });
+    res.status(401).json({
+      ok: false,
+      error: error.message
+    });
   }
 });
 
@@ -336,7 +499,12 @@ app.post(
     try {
       const auth = await getUserFromAuth(req);
 
-      if (!supabaseAdmin) return res.status(500).json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured" });
+      if (!supabaseAdmin) {
+        return res.status(500).json({
+          ok: false,
+          error: "SUPABASE_SERVICE_ROLE_KEY is not configured"
+        });
+      }
 
       const projectId = req.body.projectId || crypto.randomUUID();
       const name = req.body.name || "Untitled Project";
@@ -353,10 +521,25 @@ app.post(
 
       if (images.length > 0) {
         assets.images = [];
+
         for (let i = 0; i < images.length; i++) {
           tempFiles.push(images[i].path);
-          const storagePath = auth.user.id + "/" + projectId + "/images/" + i + "-" + images[i].originalname;
-          const url = await uploadToStorage(images[i].path, storagePath, images[i].mimetype);
+
+          const storagePath =
+            auth.user.id +
+            "/" +
+            projectId +
+            "/images/" +
+            i +
+            "-" +
+            images[i].originalname;
+
+          const url = await uploadToStorage(
+            images[i].path,
+            storagePath,
+            images[i].mimetype
+          );
+
           assets.images.push({
             name: images[i].originalname,
             path: storagePath,
@@ -368,8 +551,16 @@ app.post(
 
       if (audio) {
         tempFiles.push(audio.path);
-        const storagePath = auth.user.id + "/" + projectId + "/audio/" + audio.originalname;
-        const url = await uploadToStorage(audio.path, storagePath, audio.mimetype);
+
+        const storagePath =
+          auth.user.id + "/" + projectId + "/audio/" + audio.originalname;
+
+        const url = await uploadToStorage(
+          audio.path,
+          storagePath,
+          audio.mimetype
+        );
+
         assets.audio = {
           name: audio.originalname,
           path: storagePath,
@@ -385,22 +576,33 @@ app.post(
         assets: assets
       };
 
-      const result = await supabaseAdmin.from("projects").upsert({
-        id: projectId,
-        user_id: auth.user.id,
-        name: name,
-        data: data,
-        updated_at: new Date().toISOString()
-      }).select("*").single();
+      const result = await supabaseAdmin
+        .from("projects")
+        .upsert({
+          id: projectId,
+          user_id: auth.user.id,
+          name: name,
+          data: data,
+          updated_at: new Date().toISOString()
+        })
+        .select("*")
+        .single();
 
       if (result.error) throw result.error;
 
       cleanup(tempFiles);
 
-      res.json({ ok: true, project: result.data });
+      res.json({
+        ok: true,
+        project: result.data
+      });
     } catch (error) {
       cleanup(tempFiles);
-      res.status(500).json({ ok: false, error: error.message });
+
+      res.status(500).json({
+        ok: false,
+        error: error.message
+      });
     }
   }
 );
@@ -409,7 +611,12 @@ app.delete("/api/projects/:id", async function (req, res) {
   try {
     const auth = await getUserFromAuth(req);
 
-    if (!supabaseAdmin) return res.status(500).json({ ok: false, error: "SUPABASE_SERVICE_ROLE_KEY is not configured" });
+    if (!supabaseAdmin) {
+      return res.status(500).json({
+        ok: false,
+        error: "SUPABASE_SERVICE_ROLE_KEY is not configured"
+      });
+    }
 
     const result = await supabaseAdmin
       .from("projects")
@@ -419,9 +626,14 @@ app.delete("/api/projects/:id", async function (req, res) {
 
     if (result.error) throw result.error;
 
-    res.json({ ok: true });
+    res.json({
+      ok: true
+    });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    res.status(500).json({
+      ok: false,
+      error: error.message
+    });
   }
 });
 
@@ -432,6 +644,9 @@ app.get("/api/health", function (req, res) {
     dashboard: true,
     auth: Boolean(supabaseAuth),
     serviceRole: Boolean(supabaseAdmin),
+    supabaseUrlLoaded: Boolean(SUPABASE_URL),
+    supabaseAnonLoaded: Boolean(SUPABASE_ANON_KEY),
+    serviceRoleLoaded: Boolean(SUPABASE_SERVICE_ROLE_KEY),
     output: "mp4",
     endpoint: "/api/video/timeline",
     timestamp: new Date().toISOString()
@@ -450,13 +665,20 @@ app.post(
 
     try {
       if (!req.files || !req.files.images) {
-        return res.status(400).json({ ok: false, error: "images are required" });
+        return res.status(400).json({
+          ok: false,
+          error: "images are required"
+        });
       }
 
       const images = req.files.images;
-      const audioPath = req.files.audio && req.files.audio[0] ? req.files.audio[0].path : "";
+      const audioPath =
+        req.files.audio && req.files.audio[0] ? req.files.audio[0].path : "";
 
-      images.forEach(function (img) { tempFiles.push(img.path); });
+      images.forEach(function (img) {
+        tempFiles.push(img.path);
+      });
+
       if (audioPath) tempFiles.push(audioPath);
 
       const filename = safeName(req.body.filename || "result.mp4");
@@ -475,11 +697,16 @@ app.post(
 
       for (let i = 0; i < images.length; i++) {
         const item = timeline[i] || {};
+
         if (!item.duration) item.duration = 5;
         if (!item.effect) item.effect = i % 2 === 0 ? "cinematic" : "zoom_in";
         if (!item.transition) item.transition = "fade";
 
-        const scenePath = path.join(outputDir, jobId + "-scene-" + i + ".mp4");
+        const scenePath = path.join(
+          outputDir,
+          jobId + "-scene-" + i + ".mp4"
+        );
+
         scenePaths.push(scenePath);
         tempFiles.push(scenePath);
 
@@ -500,7 +727,11 @@ app.post(
       });
     } catch (error) {
       cleanup(tempFiles);
-      res.status(500).json({ ok: false, error: error.message });
+
+      res.status(500).json({
+        ok: false,
+        error: error.message
+      });
     }
   }
 );
