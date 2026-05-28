@@ -534,40 +534,42 @@ function safeFilename(filename, fallback) {
   return clean || fallback;
 }
 
+```js
 async function getBrowser() {
   try {
     const puppeteer = require("puppeteer");
 
+    const executablePath =
+      process.env.PUPPETEER_EXECUTABLE_PATH ||
+      process.env.CHROME_BIN ||
+      "/usr/bin/chromium";
+
     return await puppeteer.launch({
       headless: "new",
+      executablePath,
       args: [
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
         "--disable-gpu",
+        "--disable-software-rasterizer",
+        "--disable-extensions",
+        "--single-process",
+        "--no-zygote",
         "--autoplay-policy=no-user-gesture-required",
       ],
+      ignoreHTTPSErrors: true,
     });
   } catch (error) {
-    throw new Error("Puppeteer is not installed. Run: npm install puppeteer");
+    console.error("Browser launch failed:", error);
+
+    throw new Error(
+      "Browser launch failed: " + error.message
+    );
   }
 }
+```
 
-app.get("/api/health", (req, res) => {
-  res.json({
-    ok: true,
-    engine: "VS Tools Render Engine V2 Final",
-    animations: true,
-    transitions: true,
-    typography: true,
-    headerFix: true,
-    htmlDownload: true,
-    pngDownload: true,
-    pdfDownload: true,
-    mp4Download: true,
-    timestamp: new Date().toISOString(),
-  });
-});
 
 app.post("/api/render/html", (req, res) => {
   try {
