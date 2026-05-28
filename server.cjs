@@ -644,9 +644,15 @@ app.get("/api/health", function (req, res) {
     dashboard: true,
     auth: Boolean(supabaseAuth),
     serviceRole: Boolean(supabaseAdmin),
+
     supabaseUrlLoaded: Boolean(SUPABASE_URL),
     supabaseAnonLoaded: Boolean(SUPABASE_ANON_KEY),
     serviceRoleLoaded: Boolean(SUPABASE_SERVICE_ROLE_KEY),
+
+    envKeys: Object.keys(process.env).filter(function (k) {
+      return k.includes("SUPABASE") || k.includes("SERVICE");
+    }),
+
     output: "mp4",
     endpoint: "/api/video/timeline",
     timestamp: new Date().toISOString()
