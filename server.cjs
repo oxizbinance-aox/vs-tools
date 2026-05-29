@@ -29,7 +29,6 @@ const SUPABASE_SERVICE_ROLE_KEY =
   process.env.VITE_SUPABASE_SERVICE_ROLE_KEY ||
   process.env.VITE_SERVICE_ROLE_KEY ||
   process.env.SERVICE_ROLE_KEY ||
-  process.env.SUPABASE_SECRET_KEY ||
   "";
 
 const supabaseAuth =
