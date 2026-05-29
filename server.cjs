@@ -766,7 +766,8 @@ app.use(function (req, res) {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.get("*", function (req, res) {
+app.use(function (req, res, next) {
+  if (req.path.startsWith("/api/")) return next();
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
