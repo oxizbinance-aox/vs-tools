@@ -46,6 +46,25 @@ app.use(express.json({ limit: "500mb" }));
 app.use(express.urlencoded({ extended: true, limit: "500mb" }));
 app.use(express.static(path.join(__dirname, "public")));
 
+app.get("/api/health", function (req, res) {
+  res.json({
+    ok: true,
+    engine: "VS-Tools Presentation Final",
+    dashboard: true,
+    auth: !!supabaseAuth,
+    serviceRole: !!supabaseAdmin,
+    supabaseUrlLoaded: !!SUPABASE_URL,
+    supabaseAnonLoaded: !!SUPABASE_ANON_KEY,
+    serviceRoleLoaded: !!SUPABASE_SERVICE_ROLE_KEY,
+    envKeys: Object.keys(process.env).filter(function (key) {
+      return key.includes("SUPABASE") || key.includes("RAILWAY") || key.includes("VITE");
+    }),
+    output: "mp4",
+    endpoint: "/api/video/timeline",
+    timestamp: new Date().toISOString()
+  });
+});
+
 const uploadDir = path.join(__dirname, "uploads");
 const outputDir = path.join(__dirname, "outputs");
 
