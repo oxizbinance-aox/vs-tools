@@ -9,7 +9,7 @@
   "server": "node server.cjs",
   "build": "echo no build needed",
   "migrate": "echo no migrate needed"
-}
+},
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",
     "cors": "^2.8.5",
