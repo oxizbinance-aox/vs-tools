@@ -50,7 +50,9 @@ export default function RenderPreview({
         width: "100%",
         height: "100%",
         overflow: "hidden",
-        position: "relative"
+        position: "absolute",
+        inset: 0,
+        zIndex: 1
       }}
     >
       <img

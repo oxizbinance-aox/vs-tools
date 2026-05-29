@@ -417,7 +417,7 @@ if (audioRef.current.ended) {
                   selectedSize={selectedSize}
                 />
 
-                <div style={styles.previewBottom}>
+                <div style={{ ...styles.previewBottom, zIndex: 5 }}>
                   <button style={styles.whiteButton} onClick={togglePlay}>
                     {playing ? <Pause size={18} /> : <Play size={18} />}
                     {playing ? t.pause : t.play}
