@@ -22,6 +22,7 @@ import AuthPanel from "./components/AuthPanel";
 import CloudProjects from "./components/CloudProjects";
 import TemplateMarketplace from "./components/TemplateMarketplace";
 import AdvancedWaveform from "./components/AdvancedWaveform";
+import RenderPreview from "./components/RenderPreview";
 
 export default function App() {
   const [language, setLanguage] = useState("id");
@@ -410,17 +411,10 @@ if (audioRef.current.ended) {
           >
             {current ? (
               <>
-                <img
-                  src={current.url}
-                  alt={current.name}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: current.fit === "contain" ? "contain" : "cover",
-                    transform: `scale(${current.zoom}) translate(${current.x}px, ${current.y}px)`,
-                    transformOrigin: "center",
-                    transition: "all .25s ease",
-                  }}
+                <RenderPreview
+                  slides={slides}
+                  audioTime={audioTime}
+                  selectedSize={selectedSize}
                 />
 
                 <div style={styles.previewBottom}>
