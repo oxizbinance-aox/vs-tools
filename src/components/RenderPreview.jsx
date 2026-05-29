@@ -52,7 +52,8 @@ export default function RenderPreview({
         overflow: "hidden",
         position: "absolute",
         inset: 0,
-        zIndex: 1
+        zIndex: 1,
+        pointerEvents: "none"
       }}
     >
       <img

@@ -417,10 +417,21 @@ if (audioRef.current.ended) {
                   selectedSize={selectedSize}
                 />
 
-                <div style={{ ...styles.previewBottom, zIndex: 5 }}>
+                <div
+                  style={{
+                    position: "absolute",
+                    left: 16,
+                    right: 16,
+                    bottom: 16,
+                    zIndex: 50,
+                    display: "flex",
+                    gap: 12,
+                    justifyContent: "center"
+                  }}
+                >
                   <button style={styles.whiteButton} onClick={togglePlay}>
                     {playing ? <Pause size={18} /> : <Play size={18} />}
-                    {playing ? t.pause : t.play}
+                    {playing ? "Pause Preview" : "Play Preview"}
                   </button>
 
                   <button style={styles.pinkButton} onClick={backendRender}>
