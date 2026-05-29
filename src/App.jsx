@@ -54,26 +54,27 @@ export default function App() {
   const selectedSize = VIDEO_SIZES[videoSize];
 
   useEffect(() => {
-    if (!playing || !audioRef.current) return;
+  if (!playing || !audioRef.current) return;
 
-    const timer = setInterval(() => {
-      const time = audioRef.current.currentTime;
-      setAudioTime(time);
+  const timer = setInterval(() => {
+    const time = audioRef.current.currentTime;
+    setAudioTime(time);
 
-      const index = slides.findIndex(
-  (s) => time >= s.start && time < s.end
-);
+    const index = slides.findIndex(
+      (s) => time >= s.start && time < s.end
+    );
 
-if (index >= 0) {
-  setActive(index);
-}
+    if (index >= 0) {
+      setActive(index);
+    }
 
-if (audioRef.current.ended) {
-  setPlaying(false);
-}
+    if (audioRef.current.ended) {
+      setPlaying(false);
+    }
+  }, 200);
 
-    return () => clearInterval(timer);
-  }, [playing, slides]);
+  return () => clearInterval(timer);
+}, [playing, slides]);
 
   function formatTime(sec) {
     if (!Number.isFinite(sec)) return "0:00";

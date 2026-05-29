@@ -44,7 +44,7 @@ const supabaseAdmin =
 app.use(cors());
 app.use(express.json({ limit: "500mb" }));
 app.use(express.urlencoded({ extended: true, limit: "500mb" }));
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.static(path.join(__dirname, "dist")));
 
 app.get("/api/health", function (req, res) {
   res.json({
@@ -764,6 +764,10 @@ app.post(
 
 app.use(function (req, res) {
   res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("*", function (req, res) {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 app.listen(PORT, "0.0.0.0", function () {
