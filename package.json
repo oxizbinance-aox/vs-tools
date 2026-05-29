@@ -4,12 +4,12 @@
   "version": "10.0.0",
   "main": "server.cjs",
   "scripts": {
-  "start": "node server.cjs",
-  "dev": "node server.cjs",
-  "server": "node server.cjs",
-  "build": "echo no build needed",
-  "migrate": "echo no migrate needed"
-},
+    "start": "node server.cjs",
+    "dev": "node server.cjs",
+    "server": "node server.cjs",
+    "build": "echo no build needed",
+    "migrate": "echo no migrate needed"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.49.8",
     "cors": "^2.8.5",
