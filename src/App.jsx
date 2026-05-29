@@ -403,6 +403,17 @@ if (audioRef.current.ended) {
 
       <main style={styles.workspace}>
         <section style={styles.panel}>
+          <div style={{ display: "flex", gap: 12, marginBottom: 12, position: "relative", zIndex: 100 }}>
+            <button style={styles.whiteButton} onClick={togglePlay}>
+              {playing ? <Pause size={18} /> : <Play size={18} />}
+              {playing ? "Pause Preview" : "Play Preview"}
+            </button>
+
+            <button style={styles.pinkButton} onClick={backendRender}>
+              <Download size={18} />
+              Render MP4
+            </button>
+          </div>
           <div
             style={{
               ...styles.preview,
