@@ -70,11 +70,6 @@ export async function removeObjectWithBackend(imageBlob, maskBlob) {
   formData.append("image", imageBlob, "image.png");
   formData.append("mask", maskBlob, "mask.png");
 
-  const response = await fetch(`${BACKEND_URL}/api/remove-object`, {
-    method: "POST",
-    body: formData
-  });
-
   const response = await fetch(`${BACKEND_URL}/api/video/timeline`, {
   method: "POST",
   body: formData
