@@ -75,8 +75,11 @@ if (!fs.existsSync(outputDir)) fs.mkdirSync(outputDir, { recursive: true });
 const upload = multer({
   dest: uploadDir,
   limits: {
-    fileSize: 500 * 1024 * 1024,
-    files: 200
+    fileSize: 1024 * 1024 * 1024,
+    fieldSize: 1024 * 1024 * 1024,
+    fields: 1000,
+    files: 300,
+    parts: 1500
   }
 });
 
