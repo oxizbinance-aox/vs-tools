@@ -167,6 +167,19 @@ const LAYOUT_OPTIONS = [
   { value: "collage", label: "Collage" },
 ];
 
+const SUBTITLE_STYLE_OPTIONS = [
+  { value: "tiktok", label: "TikTok Bold" },
+  { value: "documentary", label: "Documentary" },
+  { value: "youtube", label: "YouTube Clean" },
+  { value: "minimal", label: "Minimal" },
+];
+
+const SUBTITLE_POSITION_OPTIONS = [
+  { value: "top", label: "Top" },
+  { value: "center", label: "Center" },
+  { value: "bottom", label: "Bottom" },
+];
+
 function normalizeSlideImages(slide) {
   const images = Array.isArray(slide?.images) ? slide.images.filter(Boolean) : [];
   if (images.length > 0) return images;
@@ -185,6 +198,10 @@ export default function App() {
   const [audioTime, setAudioTime] = useState(0);
   const [videoSize, setVideoSize] = useState("landscape");
   const [subtitles, setSubtitles] = useState([]);
+  const [subtitleStyle, setSubtitleStyle] = useState("tiktok");
+  const [subtitlePosition, setSubtitlePosition] = useState("bottom");
+  const [subtitleFontSize, setSubtitleFontSize] = useState(42);
+  const [subtitleBoxEnabled, setSubtitleBoxEnabled] = useState(true);
   const [playing, setPlaying] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportProgress, setExportProgress] = useState(0);
@@ -242,6 +259,10 @@ export default function App() {
       audioName,
       audioDuration,
       videoSize,
+      subtitleStyle,
+      subtitlePosition,
+      subtitleFontSize,
+      subtitleBoxEnabled,
     });
   }
 
@@ -249,6 +270,10 @@ export default function App() {
     setLanguage(project.language || "id");
     setSlides(project.slides || []);
     setSubtitles(project.subtitles || []);
+    setSubtitleStyle(project.subtitleStyle || "tiktok");
+    setSubtitlePosition(project.subtitlePosition || "bottom");
+    setSubtitleFontSize(Number(project.subtitleFontSize || 42));
+    setSubtitleBoxEnabled(project.subtitleBoxEnabled !== false);
     setAudioDataUrl(project.audioDataUrl || null);
     setAudioUrl(project.audioDataUrl || null);
     setAudioName(project.audioName || "");
@@ -470,6 +495,10 @@ export default function App() {
         language,
         audioDataUrl,
         audioName,
+        subtitleStyle,
+        subtitlePosition,
+        subtitleFontSize,
+        subtitleBoxEnabled,
         onProgress: (progress) => {
           setExportStatus(progress.message || "Rendering...");
           setExportProgress(progress.progress || 0);
@@ -640,8 +669,13 @@ export default function App() {
               <>
                 <RenderPreview
                   slides={slides}
+                  subtitles={subtitles}
                   audioTime={audioTime}
                   selectedSize={selectedSize}
+                  subtitleStyle={subtitleStyle}
+                  subtitlePosition={subtitlePosition}
+                  subtitleFontSize={subtitleFontSize}
+                  subtitleBoxEnabled={subtitleBoxEnabled}
                 />
 
                 <div
@@ -908,6 +942,47 @@ export default function App() {
           )}
 
           <h2 style={{ marginTop: 24 }}>{t.subtitleEditor}</h2>
+
+          <label style={styles.label}>Subtitle Style</label>
+          <select
+            value={subtitleStyle}
+            onChange={(e) => setSubtitleStyle(e.target.value)}
+            style={styles.input}
+          >
+            {SUBTITLE_STYLE_OPTIONS.map((item) => (
+              <option key={item.value} value={item.value}>{item.label}</option>
+            ))}
+          </select>
+
+          <label style={styles.label}>Subtitle Position</label>
+          <select
+            value={subtitlePosition}
+            onChange={(e) => setSubtitlePosition(e.target.value)}
+            style={styles.input}
+          >
+            {SUBTITLE_POSITION_OPTIONS.map((item) => (
+              <option key={item.value} value={item.value}>{item.label}</option>
+            ))}
+          </select>
+
+          <label style={styles.label}>Subtitle Font Size: {subtitleFontSize}px</label>
+          <input
+            type="range"
+            min="20"
+            max="90"
+            value={subtitleFontSize}
+            onChange={(e) => setSubtitleFontSize(Number(e.target.value))}
+            style={styles.range}
+          />
+
+          <label style={{ ...styles.label, display: "flex", alignItems: "center", gap: 10 }}>
+            <input
+              type="checkbox"
+              checked={subtitleBoxEnabled}
+              onChange={(e) => setSubtitleBoxEnabled(e.target.checked)}
+            />
+            Subtitle Background Box
+          </label>
 
           <button style={styles.secondaryButton} onClick={addSubtitle}>
             {t.addSubtitle}
