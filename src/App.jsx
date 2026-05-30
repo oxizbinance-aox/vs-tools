@@ -265,10 +265,10 @@ export default function App() {
       setExportStatus("Sending project to backend...");
       setExportProgress(5);
 
-      const result = await startBackendRender({
+      await startBackendRender({
         slides,
         subtitles,
-        videoSize,
+        videoSize: selectedSize,
         language,
         audioDataUrl,
         audioName,
@@ -278,13 +278,8 @@ export default function App() {
         },
       });
 
-      setExportStatus("Render complete. Downloading...");
+      setExportStatus("Download complete.");
       setExportProgress(100);
-
-      const a = document.createElement("a");
-      a.href = result.file;
-      a.download = "vs-tools-render.mp4";
-      a.click();
     } catch (err) {
       console.error(err);
       alert(err?.message || "Download gagal.");
