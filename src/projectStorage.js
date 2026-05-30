@@ -26,7 +26,6 @@ export function saveProjectFile(project) {
   });
 
   const url = URL.createObjectURL(blob);
-
   const a = document.createElement("a");
 
   a.href = url;
@@ -61,7 +60,12 @@ export function buildProjectPayload({
   audioDataUrl,
   audioName,
   audioDuration,
-  videoSize
+  videoSize,
+
+  subtitleStyle,
+  subtitlePosition,
+  subtitleFontSize,
+  subtitleBoxEnabled
 }) {
   return {
     version: "vs-tools-final-max",
@@ -72,6 +76,12 @@ export function buildProjectPayload({
     audioName,
     audioDuration,
     videoSize,
+
+    subtitleStyle,
+    subtitlePosition,
+    subtitleFontSize,
+    subtitleBoxEnabled,
+
     savedAt: new Date().toISOString()
   };
 }
