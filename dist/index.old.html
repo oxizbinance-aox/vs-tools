@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>VS-Tools Presentation</title>
+
+<style>
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:Arial,sans-serif;
+  background:
+  radial-gradient(circle at top left,#ff00aa33,transparent 30%),
+  radial-gradient(circle at bottom right,#ffffff11,transparent 30%),
+  #050510;
+  color:white;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+.container{
+  width:min(1400px,calc(100% - 30px));
+  margin:auto;
+  padding:30px 0 80px;
+}
+
+.hero{
+  text-align:center;
+  padding:50px 0;
+}
+
+.hero h1{
+  font-size:90px;
+  line-height:.9;
+  background:linear-gradient(90deg,#fff,#ff4fd8,#cfd3dc,#fff);
+  -webkit-background-clip:text;
+  color:transparent;
+  animation:titleIn 1s ease;
+}
+
+.hero p{
+  margin-top:20px;
+  color:#c7c7d5;
+  font-size:18px;
+}
+
+.glass{
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:30px;
+  padding:25px;
+  margin-top:20px;
+  backdrop-filter:blur(20px);
+}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+  gap:15px;
+}
+
+input,
+select,
+button,
+textarea{
+  width:100%;
+  padding:14px;
+  border:none;
+  outline:none;
+  border-radius:18px;
+  background:#11111d;
+  color:white;
+  margin-top:8px;
+}
+
+button{
+  cursor:pointer;
+  font-weight:bold;
+  background:linear-gradient(135deg,#ff00aa,#ffffff22);
+  transition:.3s;
+}
+
+button:hover{
+  transform:translateY(-3px);
+  box-shadow:0 10px 40px rgba(255,0,170,.4);
+}
+
+.secondary{
+  background:#ffffff10;
+}
+
+.danger{
+  background:linear-gradient(135deg,#ff0044,#ffffff11);
+}
+
+.scene{
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:25px;
+  padding:20px;
+  margin-top:18px;
+  background:rgba(255,255,255,.03);
+}
+
+.scene img{
+  width:100%;
+  aspect-ratio:16/9;
+  object-fit:cover;
+  border-radius:20px;
+  margin-bottom:15px;
+}
+
+.hidden{
+  display:none;
+}
+
+.status{
+  white-space:pre-wrap;
+  color:#ffd4f5;
+  margin-top:10px;
+}
+
+.projectCard{
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;
+  padding:15px;
+  margin-top:12px;
+  background:rgba(255,255,255,.04);
+}
+
+.timelineHeader{
+  margin-bottom:15px;
+  font-size:22px;
+}
+
+@keyframes titleIn{
+  from{
+    opacity:0;
+    transform:translateY(30px) scale(.9);
+    filter:blur(20px);
+  }
+  to{
+    opacity:1;
+    transform:none;
+    filter:none;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<div class="hero">
+<h1>VS-Tools<br>Presentation</h1>
+<p>Professional AI cinematic slide presentation editor</p>
+</div>
+
+<div class="glass" id="authBox">
+
+<h2>Login / Sign Up</h2>
+
+<div class="grid">
+
+<div>
+<label>Email</label>
+<input id="email" placeholder="email">
+</div>
+
+<div>
+<label>Password</label>
+<input id="password" type="password" placeholder="password">
+</div>
+
+</div>
+
+<div class="grid" style="margin-top:15px">
+
+<button onclick="signup()">
+Create Account
+</button>
+
+<button class="secondary" onclick="login()">
+Login
+</button>
+
+</div>
+
+<div class="status" id="authStatus">
+Login required
+</div>
+
+</div>
+
+<div id="editor" class="hidden">
+
+<div class="glass">
+
+<div class="grid">
+
+<div>
+<h2>Dashboard</h2>
+<div class="status" id="userInfo"></div>
+</div>
+
+<div>
+<button class="secondary" onclick="logout()">
+Logout
+</button>
+</div>
+
+</div>
+
+</div>
+
+<div class="glass">
+
+<h2>Projects</h2>
+
+<div class="grid">
+
+<div>
+<label>Project Name</label>
+<input id="projectName" value="My Presentation">
+</div>
+
+<div>
+<button onclick="newProject()">
+New Project
+</button>
+</div>
+
+</div>
+
+<div class="grid" style="margin-top:15px">
+
+<button onclick="saveProject()">
+Save Project
+</button>
+
+<button class="secondary" onclick="loadProjects()">
+Refresh Projects
+</button>
+
+</div>
+
+<div id="projectList"></div>
+
+<div class="status" id="projectStatus"></div>
+
+</div>
+
+<div class="glass">
+
+<h2>Upload Assets</h2>
+
+<label>Slides / Images</label>
+<input id="images" type="file" multiple accept="image/*">
+
+<label>Audio / Music</label>
+<input id="audio" type="file" accept="audio/*">
+
+<div class="grid">
+
+<div>
+<label>Filename</label>
+<input id="filename" value="presentation.mp4">
+</div>
+
+<div>
+<label>Resolution</label>
+<select id="resolution">
+<option value="1280x720">HD 1280x720</option>
+<option value="1920x1080">Full HD 1920x1080</option>
+<option value="1080x1920">Reels 1080x1920</option>
+</select>
+</div>
+
+</div>
+
+<button style="margin-top:15px" onclick="buildScenes()">
+Create Timeline
+</button>
+
+</div>
+
+<div class="glass">
+
+<div class="timelineHeader">
+Timeline Editor
+</div>
+
+<div id="scenes"></div>
+
+</div>
+
+<div class="glass">
+
+<h2>Render</h2>
+
+<button onclick="renderVideo()">
+Render MP4
+</button>
+
+<div class="status" id="renderStatus"></div>
+
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let currentUser=null;
+let accessToken=localStorage.getItem("vs_access_token")||"";
+let currentProjectId="";
+let sceneCount=0;
+let loadedAssets={images:[],audio:null};
+
+function authHeaders(){
+  return {
+    "Authorization":"Bearer "+accessToken
+  };
+}
+
+async function init(){
+
+  if(!accessToken) return;
+
+  const r=await fetch("/api/projects",{
+    headers:authHeaders()
+  });
+
+  if(!r.ok){
+    localStorage.removeItem("vs_access_token");
+    localStorage.removeItem("vs_user_email");
+    return;
+  }
+
+  currentUser={
+    email:localStorage.getItem("vs_user_email")
+  };
+
+  showEditor();
+
+  const j=await r.json();
+
+  renderProjects(j.projects||[]);
+}
+
+init();
+
+function showEditor(){
+
+  document.getElementById("authBox").classList.add("hidden");
+
+  document.getElementById("editor").classList.remove("hidden");
+
+  document.getElementById("userInfo").textContent=
+  "Logged in as: "+currentUser.email;
+}
+
+async function signup(){
+
+  const email=document.getElementById("email").value;
+  const password=document.getElementById("password").value;
+
+  const r=await fetch("/api/auth/signup",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      email,
+      password
+    })
+  });
+
+  const j=await r.json();
+
+  document.getElementById("authStatus").textContent=
+  j.message||j.error||"Signup failed";
+}
+
+async function login(){
+
+  const email=document.getElementById("email").value;
+  const password=document.getElementById("password").value;
+
+  const r=await fetch("/api/auth/login",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json"
+    },
+    body:JSON.stringify({
+      email,
+      password
+    })
+  });
+
+  const j=await r.json();
+
+  if(!j.ok){
+    document.getElementById("authStatus").textContent=
+    j.error||"Login failed";
+    return;
+  }
+
+  currentUser=j.user;
+
+  accessToken=j.session.access_token;
+
+  localStorage.setItem(
+    "vs_access_token",
+    accessToken
+  );
+
+  localStorage.setItem(
+    "vs_user_email",
+    currentUser.email
+  );
+
+  showEditor();
+
+  loadProjects();
+}
+
+function logout(){
+
+  localStorage.removeItem("vs_access_token");
+  localStorage.removeItem("vs_user_email");
+
+  location.reload();
+}
+
+function newProject(){
+
+  currentProjectId="";
+
+  sceneCount=0;
+
+  loadedAssets={
+    images:[],
+    audio:null
+  };
+
+  document.getElementById("projectName").value=
+  "My Presentation";
+
+  document.getElementById("images").value="";
+  document.getElementById("audio").value="";
+  document.getElementById("scenes").innerHTML="";
+}
+
+function buildScenes(){
+
+  const files=document.getElementById("images").files;
+
+  const box=document.getElementById("scenes");
+
+  box.innerHTML="";
+
+  sceneCount=files.length;
+
+  for(let i=0;i<files.length;i++){
+
+    const url=URL.createObjectURL(files[i]);
+
+    box.innerHTML+=`
+    <div class="scene">
+
+      <h3>Slide ${i+1}</h3>
+
+      <img src="${url}">
+
+      <div class="grid">
+
+        <div>
+        <label>Duration</label>
+        <input id="duration_${i}" value="5">
+        </div>
+
+        <div>
+        <label>Transition</label>
+        <select id="transition_${i}">
+          <option>fade</option>
+          <option>fade_in</option>
+          <option>fade_out</option>
+          <option>flash</option>
+          <option>dark</option>
+        </select>
+        </div>
+
+        <div>
+        <label>Effect</label>
+        <select id="effect_${i}">
+          <option>cinematic</option>
+          <option>manual_zoom</option>
+          <option>zoom_in</option>
+          <option>zoom_out</option>
+          <option>pan_left</option>
+          <option>pan_right</option>
+          <option>pan_up</option>
+          <option>pan_down</option>
+          <option>pulse</option>
+          <option>rotate_zoom</option>
+          <option>blur_zoom</option>
+        </select>
+        </div>
+
+      </div>
+
+      <div class="grid">
+
+        <div>
+        <label>Title</label>
+        <input id="title_${i}">
+        </div>
+
+        <div>
+        <label>Subtitle</label>
+        <input id="subtitle_${i}">
+        </div>
+
+      </div>
+
+      <div class="grid">
+
+        <div>
+        <label>Zoom Start</label>
+        <input id="zoomStart_${i}" value="1">
+        </div>
+
+        <div>
+        <label>Zoom End</label>
+        <input id="zoomEnd_${i}" value="1.2">
+        </div>
+
+        <div>
+        <label>Focus X</label>
+        <input id="focusX_${i}" value="0.5">
+        </div>
+
+        <div>
+        <label>Focus Y</label>
+        <input id="focusY_${i}" value="0.5">
+        </div>
+
+      </div>
+
+    </div>
+    `;
+  }
+}
+
+function getTimeline(){
+
+  const arr=[];
+
+  for(let i=0;i<sceneCount;i++){
+
+    arr.push({
+      duration:Number(document.getElementById("duration_"+i).value||5),
+      transition:document.getElementById("transition_"+i).value,
+      effect:document.getElementById("effect_"+i).value,
+      title:document.getElementById("title_"+i).value,
+      subtitle:document.getElementById("subtitle_"+i).value,
+      zoomStart:Number(document.getElementById("zoomStart_"+i).value||1),
+      zoomEnd:Number(document.getElementById("zoomEnd_"+i).value||1.2),
+      focusX:Number(document.getElementById("focusX_"+i).value||0.5),
+      focusY:Number(document.getElementById("focusY_"+i).value||0.5)
+    });
+  }
+
+  return arr;
+}
+
+async function saveProject(){
+
+  const fd=new FormData();
+
+  fd.append(
+    "projectId",
+    currentProjectId
+  );
+
+  fd.append(
+    "name",
+    document.getElementById("projectName").value
+  );
+
+  fd.append(
+    "filename",
+    document.getElementById("filename").value
+  );
+
+  fd.append(
+    "resolution",
+    document.getElementById("resolution").value
+  );
+
+  fd.append(
+    "timeline",
+    JSON.stringify(getTimeline())
+  );
+
+  fd.append(
+    "oldAssets",
+    JSON.stringify(loadedAssets)
+  );
+
+  const images=document.getElementById("images").files;
+
+  for(let i=0;i<images.length;i++){
+    fd.append("images",images[i]);
+  }
+
+  const audio=document.getElementById("audio").files[0];
+
+  if(audio){
+    fd.append("audio",audio);
+  }
+
+  document.getElementById("projectStatus").textContent=
+  "Saving project...";
+
+  const r=await fetch("/api/projects/save",{
+    method:"POST",
+    headers:authHeaders(),
+    body:fd
+  });
+
+  const j=await r.json();
+
+  if(!j.ok){
+
+    document.getElementById("projectStatus").textContent=
+    j.error;
+
+    return;
+  }
+
+  currentProjectId=j.project.id;
+
+  loadedAssets=j.project.data.assets;
+
+  document.getElementById("projectStatus").textContent=
+  "Project saved";
+
+  loadProjects();
+}
+
+async function loadProjects(){
+
+  const r=await fetch("/api/projects",{
+    headers:authHeaders()
+  });
+
+  const j=await r.json();
+
+  renderProjects(j.projects||[]);
+}
+
+function renderProjects(projects){
+
+  const box=document.getElementById("projectList");
+
+  box.innerHTML="";
+
+  projects.forEach((p,index)=>{
+
+    window["project_"+index]=p;
+
+    box.innerHTML+=`
+    <div class="projectCard">
+
+      <b>${p.name}</b>
+
+      <div style="margin-top:10px">
+      ${p.updated_at}
+      </div>
+
+      <div class="grid" style="margin-top:15px">
+
+        <button onclick="openProject(window.project_${index})">
+        Open
+        </button>
+
+        <button class="danger" onclick="deleteProject('${p.id}')">
+        Delete
+        </button>
+
+      </div>
+
+    </div>
+    `;
+  });
+}
+
+function openProject(p){
+
+  currentProjectId=p.id;
+
+  loadedAssets=p.data.assets||{
+    images:[],
+    audio:null
+  };
+
+  document.getElementById("projectName").value=
+  p.name;
+
+  document.getElementById("filename").value=
+  p.data.filename||"presentation.mp4";
+
+  document.getElementById("resolution").value=
+  p.data.resolution||"1280x720";
+
+  const timeline=p.data.timeline||[];
+
+  const box=document.getElementById("scenes");
+
+  box.innerHTML="";
+
+  sceneCount=loadedAssets.images.length;
+
+  for(let i=0;i<loadedAssets.images.length;i++){
+
+    const item=timeline[i]||{};
+
+    box.innerHTML+=`
+    <div class="scene">
+
+      <h3>Slide ${i+1}</h3>
+
+      <img src="${loadedAssets.images[i].url}">
+
+      <div class="grid">
+
+        <div>
+        <label>Duration</label>
+        <input id="duration_${i}" value="${item.duration||5}">
+        </div>
+
+        <div>
+        <label>Transition</label>
+        <select id="transition_${i}">
+          <option ${item.transition==="fade"?"selected":""}>fade</option>
+          <option ${item.transition==="fade_in"?"selected":""}>fade_in</option>
+          <option ${item.transition==="fade_out"?"selected":""}>fade_out</option>
+          <option ${item.transition==="flash"?"selected":""}>flash</option>
+          <option ${item.transition==="dark"?"selected":""}>dark</option>
+        </select>
+        </div>
+
+        <div>
+        <label>Effect</label>
+        <select id="effect_${i}">
+          <option ${item.effect==="cinematic"?"selected":""}>cinematic</option>
+          <option ${item.effect==="manual_zoom"?"selected":""}>manual_zoom</option>
+          <option ${item.effect==="zoom_in"?"selected":""}>zoom_in</option>
+          <option ${item.effect==="zoom_out"?"selected":""}>zoom_out</option>
+          <option ${item.effect==="pan_left"?"selected":""}>pan_left</option>
+          <option ${item.effect==="pan_right"?"selected":""}>pan_right</option>
+          <option ${item.effect==="pan_up"?"selected":""}>pan_up</option>
+          <option ${item.effect==="pan_down"?"selected":""}>pan_down</option>
+          <option ${item.effect==="pulse"?"selected":""}>pulse</option>
+          <option ${item.effect==="rotate_zoom"?"selected":""}>rotate_zoom</option>
+          <option ${item.effect==="blur_zoom"?"selected":""}>blur_zoom</option>
+        </select>
+        </div>
+
+      </div>
+
+    </div>
+    `;
+  }
+}
+
+async function deleteProject(id){
+
+  if(!confirm("Delete project?")){
+    return;
+  }
+
+  await fetch("/api/projects/"+id,{
+    method:"DELETE",
+    headers:authHeaders()
+  });
+
+  loadProjects();
+}
+
+async function urlToFile(url,name,type){
+
+  const r=await fetch(url);
+
+  const b=await r.blob();
+
+  return new File([b],name,{
+    type:type||b.type
+  });
+}
+
+async function renderVideo(){
+
+  try{
+
+    const fd=new FormData();
+
+    const localImages=document.getElementById("images").files;
+
+    if(localImages.length){
+
+      for(let i=0;i<localImages.length;i++){
+        fd.append("images",localImages[i]);
+      }
+
+    }else{
+
+      for(const img of loadedAssets.images){
+
+        fd.append(
+          "images",
+          await urlToFile(
+            img.url,
+            img.name,
+            img.type
+          )
+        );
+      }
+    }
+
+    const audioLocal=document.getElementById("audio").files[0];
+
+    if(audioLocal){
+
+      fd.append("audio",audioLocal);
+
+    }else if(loadedAssets.audio){
+
+      fd.append(
+        "audio",
+        await urlToFile(
+          loadedAssets.audio.url,
+          loadedAssets.audio.name,
+          loadedAssets.audio.type
+        )
+      );
+    }
+
+    const res=document.getElementById("resolution").value.split("x");
+
+    fd.append("width",res[0]);
+    fd.append("height",res[1]);
+    fd.append("fps","30");
+
+    fd.append(
+      "filename",
+      document.getElementById("filename").value
+    );
+
+    fd.append(
+      "timeline",
+      JSON.stringify(getTimeline())
+    );
+
+    document.getElementById("renderStatus").textContent=
+    "Rendering MP4...";
+
+    const response=await fetch("/api/video/timeline",{
+      method:"POST",
+      body:fd
+    });
+
+    if(!response.ok){
+
+      document.getElementById("renderStatus").textContent=
+      await response.text();
+
+      return;
+    }
+
+    const blob=await response.blob();
+
+    const url=URL.createObjectURL(blob);
+
+    const a=document.createElement("a");
+
+    a.href=url;
+
+    a.download=
+    document.getElementById("filename").value||
+    "presentation.mp4";
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    a.remove();
+
+    URL.revokeObjectURL(url);
+
+    document.getElementById("renderStatus").textContent=
+    "Render complete";
+
+  }catch(e){
+
+    document.getElementById("renderStatus").textContent=
+    e.message;
+  }
+}
+
+</script>
+
+</body>
+</html>
