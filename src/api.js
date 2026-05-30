@@ -16,52 +16,59 @@ export async function startBackendRender({
     formData.append("images", imageBlob, `slide-${i + 1}.png`);
   }
 
-  const audioBlob = await fetch(audioDataUrl).then((res) => res.blob());
-  formData.append("audio", audioBlob, audioName || "audio.mp3");
+  if (audioDataUrl) {
+    const audioBlob = await fetch(audioDataUrl).then((res) => res.blob());
+    formData.append("audio", audioBlob, audioName || "audio.mp3");
+  }
 
-  const projectBlob = new Blob(
-    [JSON.stringify({ slides, subtitles, videoSize, language })],
-    { type: "application/json" }
-  );
+  formData.append("timeline", JSON.stringify(slides || []));
+  formData.append("subtitles", JSON.stringify(subtitles || []));
+  formData.append("language", language || "id");
+  formData.append("filename", "result.mp4");
 
-  formData.append("project", projectBlob, "project.json");
+  if (videoSize) {
+    formData.append("width", String(videoSize.width || 1280));
+    formData.append("height", String(videoSize.height || 720));
+  }
+
+  onProgress?.({
+    status: "rendering",
+    progress: 10,
+    message: "Rendering video..."
+  });
 
   const response = await fetch(`${BACKEND_URL}/api/video/timeline`, {
     method: "POST",
     body: formData
   });
 
-  const started = await response.json();
-
-  if (!response.ok || !started.jobId) {
-    throw new Error(started.error || "Backend render failed to start.");
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || "Backend render failed.");
   }
 
-  return new Promise((resolve, reject) => {
-    const timer = setInterval(async () => {
-      try {
-        const progressResponse = await fetch(
-          `${BACKEND_URL}/api/render-progress/${started.jobId}`
-        );
+  const blob = await response.blob();
+  const url = window.URL.createObjectURL(blob);
 
-        const progress = await progressResponse.json();
-        onProgress?.(progress);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "result.mp4";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
 
-        if (progress.status === "complete") {
-          clearInterval(timer);
-          resolve(progress);
-        }
+  window.URL.revokeObjectURL(url);
 
-        if (progress.status === "failed") {
-          clearInterval(timer);
-          reject(new Error(progress.message || "Backend render failed."));
-        }
-      } catch (err) {
-        clearInterval(timer);
-        reject(err);
-      }
-    }, 1000);
+  onProgress?.({
+    status: "complete",
+    progress: 100,
+    message: "Download complete"
   });
+
+  return {
+    status: "complete",
+    progress: 100
+  };
 }
 
 export async function removeObjectWithBackend(imageBlob, maskBlob) {
@@ -70,27 +77,12 @@ export async function removeObjectWithBackend(imageBlob, maskBlob) {
   formData.append("image", imageBlob, "image.png");
   formData.append("mask", maskBlob, "mask.png");
 
-  const response = await fetch(`${BACKEND_URL}/api/video/timeline`, {
-  method: "POST",
-  body: formData
-});
+  const response = await fetch(`${BACKEND_URL}/api/remove-object`, {
+    method: "POST",
+    body: formData
+  });
 
-if (!response.ok) {
-  const text = await response.text();
-  throw new Error(text || "Download failed");
-}
-
-const blob = await response.blob();
-const url = window.URL.createObjectURL(blob);
-
-const a = document.createElement("a");
-a.href = url;
-a.download = "result.mp4";
-document.body.appendChild(a);
-a.click();
-a.remove();
-
-window.URL.revokeObjectURL(url);
+  const result = await response.json();
 
   if (!response.ok) {
     throw new Error(result.error || "Remove object failed.");
