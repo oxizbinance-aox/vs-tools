@@ -308,18 +308,18 @@ function buildMotionFilter(item, width, height, fps) {
     );
   }
 
-  let zoomExpr = "'min(1.10\\,1+0.10*on/" + totalFrames + ")'";
-  let xExpr = "'(iw-iw/zoom)*0.5+sin(on/90)*8'";
-  let yExpr = "'(ih-ih/zoom)*0.5+cos(on/100)*6'";
+  let zoomExpr = "'min(1.06\\,1+0.06*on/" + totalFrames + ")'";
+  let xExpr = "'(iw-iw/zoom)*0.5+sin(on/120)*4'";
+  let yExpr = "'(ih-ih/zoom)*0.5+cos(on/140)*3'";
 
   if (effect === "manual_zoom") {
     zoomExpr = "'" + zoomStart + "+(" + (zoomEnd - zoomStart) + ")*on/" + totalFrames + "'";
     xExpr = "'(iw-iw/zoom)*" + focusX + "'";
     yExpr = "'(ih-ih/zoom)*" + focusY + "'";
   } else if (effect === "zoom_in") {
-    zoomExpr = "'min(1.25\\,1+0.25*on/" + totalFrames + ")'";
+    zoomExpr = "'min(1.12\\,1+0.12*on/" + totalFrames + ")'";
   } else if (effect === "zoom_out") {
-    zoomExpr = "'max(1.0\\,1.25-0.25*on/" + totalFrames + ")'";
+    zoomExpr = "'max(1.0\\,1.12-0.12*on/" + totalFrames + ")'";
   } else if (effect === "pan_left") {
     zoomExpr = "'1.18'";
     xExpr = "'(iw-iw/zoom)*(1-on/" + totalFrames + ")'";
