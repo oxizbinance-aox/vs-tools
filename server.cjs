@@ -348,7 +348,9 @@ function buildMotionFilter(item, width, height, fps) {
     xExpr +
     ":y=" +
     yExpr +
-    ":d=1:s=" +
+    ":d=" +
+    totalFrames +
+    ":s=" +
     width +
     "x" +
     height +
