@@ -766,11 +766,6 @@ app.use(function (req, res) {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
-app.use(function (req, res, next) {
-  if (req.path.startsWith("/api/")) return next();
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
-
 app.post("/api/download/mp4", async function (req, res) {
   try {
     res.setHeader("Content-Type", "application/json");
@@ -784,6 +779,11 @@ app.post("/api/download/mp4", async function (req, res) {
       error: error.message
     });
   }
+});
+
+app.use(function (req, res, next) {
+  if (req.path.startsWith("/api/")) return next();
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 app.listen(PORT, "0.0.0.0", function () {
