@@ -79,6 +79,23 @@ const upload = multer({
   }
 });
 
+function filesByField(req, fieldName) {
+  if (!req.files) return [];
+
+  if (Array.isArray(req.files)) {
+    return req.files.filter(function (file) {
+      return file.fieldname === fieldName;
+    });
+  }
+
+  return req.files[fieldName] || [];
+}
+
+function firstFileByField(req, fieldName) {
+  const files = filesByField(req, fieldName);
+  return files.length > 0 ? files[0] : null;
+}
+
 function safeName(name) {
   return String(name || "result.mp4").split(/[\\\/:*?"<>| ]/).join("") || "result.mp4";
 }
@@ -533,8 +550,8 @@ app.post(
         audio: oldAssets.audio || null
       };
 
-      const images = req.files && req.files.images ? req.files.images : [];
-      const audio = req.files && req.files.audio ? req.files.audio[0] : null;
+      const images = filesByField(req, "images");
+      const audio = firstFileByField(req, "audio");
 
       if (images.length > 0) {
         assets.images = [];
@@ -678,25 +695,22 @@ app.get("/api/health", function (req, res) {
 
 app.post(
   "/api/video/timeline",
-  upload.fields([
-    { name: "images", maxCount: 150 },
-    { name: "audio", maxCount: 1 }
-  ]),
+  upload.any(),
   async function (req, res) {
     const tempFiles = [];
     let outputPath = "";
 
     try {
-      if (!req.files || !req.files.images) {
+      const images = filesByField(req, "images").concat(filesByField(req, "image"));
+      const audio = firstFileByField(req, "audio");
+      const audioPath = audio ? audio.path : "";
+
+      if (!images.length) {
         return res.status(400).json({
           ok: false,
           error: "images are required"
         });
       }
-
-      const images = req.files.images;
-      const audioPath =
-        req.files.audio && req.files.audio[0] ? req.files.audio[0].path : "";
 
       images.forEach(function (img) {
         tempFiles.push(img.path);
@@ -760,12 +774,25 @@ app.post(
 );
 
 app.use(function (req, res) {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({
+      ok: false,
+      error: "API endpoint not found"
+    });
+  }
 
-app.use(function (req, res, next) {
-  if (req.path.startsWith("/api/")) return next();
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
+  const distIndex = path.join(__dirname, "dist", "index.html");
+  const publicIndex = path.join(__dirname, "public", "index.html");
+
+  if (fs.existsSync(distIndex)) {
+    return res.sendFile(distIndex);
+  }
+
+  if (fs.existsSync(publicIndex)) {
+    return res.sendFile(publicIndex);
+  }
+
+  return res.send("<h1>VS-Tools Presentation Final</h1><p>Server is running.</p>");
 });
 
 app.listen(PORT, "0.0.0.0", function () {
