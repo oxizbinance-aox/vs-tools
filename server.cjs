@@ -4,7 +4,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const crypto = require("crypto");
-const { execFile } = require("child_process");
+const { spawn } = require("child_process");
 const { createClient } = require("@supabase/supabase-js");
 require("dotenv").config();
 
@@ -122,9 +122,43 @@ function cleanup(paths) {
 
 function run(cmd, args) {
   return new Promise(function (resolve, reject) {
-    execFile(cmd, args, { maxBuffer: 1024 * 1024 * 30 }, function (error, stdout, stderr) {
-      if (error) return reject(new Error(stderr || error.message));
-      resolve({ stdout, stderr });
+    const child = spawn(cmd, args, {
+      windowsHide: true
+    });
+
+    let stdout = "";
+    let stderr = "";
+    const maxLogLength = 24000;
+
+    function appendLog(current, chunk) {
+      const next = current + chunk.toString();
+      return next.length > maxLogLength ? next.slice(next.length - maxLogLength) : next;
+    }
+
+    child.stdout.on("data", function (chunk) {
+      stdout = appendLog(stdout, chunk);
+    });
+
+    child.stderr.on("data", function (chunk) {
+      stderr = appendLog(stderr, chunk);
+    });
+
+    child.on("error", function (error) {
+      reject(error);
+    });
+
+    child.on("close", function (code) {
+      if (code !== 0) {
+        return reject(
+          new Error(
+            stderr ||
+              stdout ||
+              "Command failed: " + cmd + " exited with code " + code
+          )
+        );
+      }
+
+      resolve({ stdout: stdout, stderr: stderr });
     });
   });
 }
@@ -511,23 +545,25 @@ async function concatScenes(scenePaths, concatFile, videoOnlyPath) {
   fs.writeFileSync(concatFile, list);
 
   await run("ffmpeg", [
-  "-y",
-  "-f",
-  "concat",
-  "-safe",
-  "0",
-  "-i",
-  concatFile,
-  "-c:v",
-  "libx264",
-  "-preset",
-  "veryfast",
-  "-pix_fmt",
-  "yuv420p",
-  "-movflags",
-  "+faststart",
-  videoOnlyPath
-]);
+    "-y",
+    "-f",
+    "concat",
+    "-safe",
+    "0",
+    "-i",
+    concatFile,
+    "-fflags",
+    "+genpts",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "veryfast",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
+    videoOnlyPath
+  ]);
 }
 
 async function mergeAudio(videoOnlyPath, audioPath, outputPath) {
@@ -880,6 +916,9 @@ app.post(
     const tempFiles = [];
     let outputPath = "";
 
+    req.setTimeout(0);
+    res.setTimeout(0);
+
     try {
       const images = filesByField(req, "images").concat(filesByField(req, "image"));
       const audio = firstFileByField(req, "audio");
@@ -901,7 +940,7 @@ app.post(
       const filename = safeName(req.body.filename || "result.mp4");
       const width = clampNumber(req.body.width, 360, 3840, 1280);
       const height = clampNumber(req.body.height, 360, 2160, 720);
-      const fps = clampNumber(req.body.fps, 30, 60, 60);
+      const fps = clampNumber(req.body.fps, 24, 30, 30);
       const timeline = parseTimeline(req.body.timeline);
       const subtitles = parseSubtitles(req.body.subtitles);
       const subtitleStyle = req.body.subtitleStyle || "tiktok";
@@ -974,6 +1013,17 @@ app.post(
     }
   }
 );
+
+app.use(function (error, req, res, next) {
+  if (req.path.startsWith("/api/")) {
+    return res.status(500).json({
+      ok: false,
+      error: error.message || "Internal server error"
+    });
+  }
+
+  next(error);
+});
 
 app.use(function (req, res) {
   if (req.path.startsWith("/api/")) {
