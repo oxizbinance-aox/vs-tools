@@ -26,7 +26,7 @@ export async function startBackendRender({
 
   formData.append("project", projectBlob, "project.json");
 
-  const response = await fetch(`${BACKEND_URL}/api/render-long-video`, {
+  const response = await fetch(`${BACKEND_URL}/api/download/mp4`, {
     method: "POST",
     body: formData
   });
