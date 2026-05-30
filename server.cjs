@@ -107,6 +107,13 @@ function clampNumber(value, min, max, fallback) {
   return Math.max(min, Math.min(max, n));
 }
 
+function normalizePercentOrUnit(value, fallback) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return fallback;
+  if (n > 1) return clampNumber(n / 100, 0, 1, fallback);
+  return clampNumber(n, 0, 1, fallback);
+}
+
 function cleanup(paths) {
   paths.forEach(function (p) {
     if (p && fs.existsSync(p)) fs.unlink(p, function () {});
@@ -139,6 +146,134 @@ function parseTimeline(raw) {
   }
 }
 
+function parseSubtitles(raw) {
+  try {
+    const data = JSON.parse(raw || "[]");
+    return Array.isArray(data) ? data : [];
+  } catch {
+    return [];
+  }
+}
+
+function normalizeBoolean(value, fallback) {
+  if (value === undefined || value === null || value === "") return fallback;
+  if (typeof value === "boolean") return value;
+  const text = String(value).toLowerCase();
+  if (text === "false" || text === "0" || text === "no") return false;
+  if (text === "true" || text === "1" || text === "yes") return true;
+  return fallback;
+}
+
+function subtitleFontSize(width, requestedSize, text) {
+  const requested = clampNumber(requestedSize, 20, 90, 42);
+  const maxByWidth = Math.max(22, Math.floor(width / 18));
+  let size = Math.min(requested, maxByWidth);
+
+  const length = String(text || "").length;
+  if (length > 90) size = Math.floor(size * 0.72);
+  else if (length > 65) size = Math.floor(size * 0.80);
+  else if (length > 45) size = Math.floor(size * 0.90);
+
+  return Math.max(18, size);
+}
+
+function subtitleYExpression(position) {
+  if (position === "top") return "h*0.08";
+  if (position === "center") return "(h-text_h)/2";
+  return "h-text_h-h*0.075";
+}
+
+function subtitleStyleSettings(styleName, boxEnabled) {
+  if (styleName === "documentary") {
+    return {
+      fontcolor: "white@0.96",
+      borderw: 1,
+      bordercolor: "black@0.60",
+      shadow: ":shadowcolor=black@0.78:shadowx=2:shadowy=2",
+      box: boxEnabled ? ":box=1:boxcolor=black@0.30:boxborderw=14" : ""
+    };
+  }
+
+  if (styleName === "youtube") {
+    return {
+      fontcolor: "white",
+      borderw: 3,
+      bordercolor: "black@0.82",
+      shadow: ":shadowcolor=black@0.70:shadowx=2:shadowy=2",
+      box: boxEnabled ? ":box=1:boxcolor=black@0.34:boxborderw=12" : ""
+    };
+  }
+
+  if (styleName === "minimal") {
+    return {
+      fontcolor: "white@0.94",
+      borderw: 1,
+      bordercolor: "black@0.45",
+      shadow: ":shadowcolor=black@0.62:shadowx=2:shadowy=2",
+      box: boxEnabled ? ":box=1:boxcolor=black@0.20:boxborderw=12" : ""
+    };
+  }
+
+  return {
+    fontcolor: "white",
+    borderw: 3,
+    bordercolor: "black@0.84",
+    shadow: ":shadowcolor=black@0.76:shadowx=2:shadowy=3",
+    box: boxEnabled ? ":box=1:boxcolor=black@0.28:boxborderw=14" : ""
+  };
+}
+
+function buildSubtitleFilters(filter, item, width, duration) {
+  const subtitles = Array.isArray(item.subtitles) ? item.subtitles : [];
+  if (!subtitles.length) return filter;
+
+  const sceneStart = Number(item.start || 0);
+  const position = item.subtitlePosition || "bottom";
+  const styleName = item.subtitleStyle || "tiktok";
+  const boxEnabled = item.subtitleBoxEnabled !== false;
+  const style = subtitleStyleSettings(styleName, boxEnabled);
+  const yExpr = subtitleYExpression(position);
+
+  subtitles.forEach(function (subtitle) {
+    const text = escapeText(subtitle.text || "");
+    if (!text) return;
+
+    const absoluteStart = Number(subtitle.start || 0);
+    const absoluteEnd = Number(subtitle.end || 0);
+    const relativeStart = Math.max(0, absoluteStart - sceneStart);
+    const relativeEnd = Math.min(duration, absoluteEnd - sceneStart);
+
+    if (relativeEnd <= 0 || relativeStart >= duration || relativeEnd <= relativeStart) return;
+
+    const fontSize = subtitleFontSize(width, item.subtitleFontSize, text);
+    const enable =
+      ":enable='between(t\\," +
+      relativeStart.toFixed(2) +
+      "\\," +
+      relativeEnd.toFixed(2) +
+      ")'";
+
+    filter +=
+      ",drawtext=text='" +
+      text +
+      "':fontcolor=" +
+      style.fontcolor +
+      ":fontsize=" +
+      fontSize +
+      ":x=(w-text_w)/2:y=" +
+      yExpr +
+      ":line_spacing=8:borderw=" +
+      style.borderw +
+      ":bordercolor=" +
+      style.bordercolor +
+      style.shadow +
+      style.box +
+      enable;
+  });
+
+  return filter;
+}
+
 function buildMotionFilter(item, width, height, fps) {
   const effect = item.effect || "cinematic";
   const duration = clampNumber(item.duration, 0.2, 36000, 5);
@@ -146,8 +281,8 @@ function buildMotionFilter(item, width, height, fps) {
 
   const zoomStart = clampNumber(item.zoomStart, 1, 5, 1);
   const zoomEnd = clampNumber(item.zoomEnd, 1, 5, 1.18);
-  const focusX = clampNumber(item.focusX, 0, 1, 0.5);
-  const focusY = clampNumber(item.focusY, 0, 1, 0.5);
+  const focusX = normalizePercentOrUnit(item.focusX, 0.5);
+  const focusY = normalizePercentOrUnit(item.focusY, 0.5);
 
   const prep =
     "scale=" +
@@ -173,9 +308,9 @@ function buildMotionFilter(item, width, height, fps) {
     );
   }
 
-  let zoomExpr = "'min(1.16\\,1+0.16*on/" + totalFrames + ")'";
-  let xExpr = "'(iw-iw/zoom)*0.5+sin(on/35)*18'";
-  let yExpr = "'(ih-ih/zoom)*0.5+cos(on/40)*12'";
+  let zoomExpr = "'min(1.10\\,1+0.10*on/" + totalFrames + ")'";
+  let xExpr = "'(iw-iw/zoom)*0.5+sin(on/90)*8'";
+  let yExpr = "'(ih-ih/zoom)*0.5+cos(on/100)*6'";
 
   if (effect === "manual_zoom") {
     zoomExpr = "'" + zoomStart + "+(" + (zoomEnd - zoomStart) + ")*on/" + totalFrames + "'";
@@ -233,7 +368,41 @@ function buildMotionFilter(item, width, height, fps) {
 }
 
 function applyTransitionAndText(filter, item, width, duration) {
-  const transition = item.transition || "fade";
+  let transition = item.transition || "fade";
+
+  const transitionAliases = {
+    zoom: "fade",
+    slideLeft: "fade",
+    slideRight: "fade",
+    slideUp: "fade",
+    slideDown: "fade",
+    rise: "fade",
+    rotateIn: "fade",
+    blurReveal: "dark",
+    glitch: "flash",
+    filmBurn: "flash",
+    flashCut: "flash",
+    glassFade: "fade",
+    cinematicFade: "fade",
+    softFlash: "flash",
+    wipeLeft: "fade",
+    wipeRight: "fade",
+    wipeUp: "fade",
+    wipeDown: "fade",
+    pushLeft: "fade",
+    pushRight: "fade",
+    spinZoom: "fade",
+    dreamBlur: "dark",
+    matrixGlitch: "flash",
+    neonSwipe: "fade",
+    paperSlide: "fade",
+    classicDissolve: "fade",
+    cameraFlash: "flash",
+    vhsNoise: "flash",
+    luxuryReveal: "dark"
+  };
+
+  transition = transitionAliases[transition] || transition;
   const title = escapeText(item.title || "");
   const subtitle = escapeText(item.subtitle || "");
 
@@ -297,6 +466,8 @@ function applyTransitionAndText(filter, item, width, duration) {
       ":shadowcolor=black@0.9:shadowx=3:shadowy=3:borderw=1:bordercolor=black@0.55";
   }
 
+  filter = buildSubtitleFilters(filter, item, width, duration);
+
   return filter;
 }
 
@@ -324,6 +495,8 @@ async function createScene(imagePath, scenePath, item, width, height, fps) {
     "veryfast",
     "-pix_fmt",
     "yuv420p",
+    "-r",
+    String(fps),
     scenePath
   ]);
 }
@@ -345,8 +518,14 @@ async function concatScenes(scenePaths, concatFile, videoOnlyPath) {
     "0",
     "-i",
     concatFile,
-    "-c",
-    "copy",
+    "-c:v",
+    "libx264",
+    "-preset",
+    "veryfast",
+    "-pix_fmt",
+    "yuv420p",
+    "-movflags",
+    "+faststart",
     videoOnlyPath
   ]);
 }
@@ -722,8 +901,13 @@ app.post(
       const filename = safeName(req.body.filename || "result.mp4");
       const width = clampNumber(req.body.width, 360, 3840, 1280);
       const height = clampNumber(req.body.height, 360, 2160, 720);
-      const fps = clampNumber(req.body.fps, 15, 60, 30);
+      const fps = clampNumber(req.body.fps, 30, 60, 60);
       const timeline = parseTimeline(req.body.timeline);
+      const subtitles = parseSubtitles(req.body.subtitles);
+      const subtitleStyle = req.body.subtitleStyle || "tiktok";
+      const subtitlePosition = req.body.subtitlePosition || "bottom";
+      const subtitleFontSize = clampNumber(req.body.subtitleFontSize, 20, 90, 42);
+      const subtitleBoxEnabled = normalizeBoolean(req.body.subtitleBoxEnabled, true);
 
       const jobId = String(Date.now());
       const scenePaths = [];
@@ -736,9 +920,26 @@ app.post(
       for (let i = 0; i < images.length; i++) {
         const item = timeline[i] || {};
 
-        if (!item.duration) item.duration = 5;
+        const itemStart = Number(item.start || 0);
+        const itemEnd = Number(item.end || 0);
+        const computedDuration = itemEnd > itemStart ? itemEnd - itemStart : 5;
+
+        item.duration = clampNumber(item.duration || computedDuration, 0.2, 36000, computedDuration);
         if (!item.effect) item.effect = i % 2 === 0 ? "cinematic" : "zoom_in";
         if (!item.transition) item.transition = "fade";
+
+        item.subtitles = subtitles.filter(function (subtitle) {
+          const subStart = Number(subtitle.start || 0);
+          const subEnd = Number(subtitle.end || 0);
+          const sceneStart = Number(item.start || 0);
+          const sceneEnd = sceneStart + Number(item.duration || 5);
+          return subEnd > sceneStart && subStart < sceneEnd;
+        });
+
+        item.subtitleStyle = subtitleStyle;
+        item.subtitlePosition = subtitlePosition;
+        item.subtitleFontSize = subtitleFontSize;
+        item.subtitleBoxEnabled = subtitleBoxEnabled;
 
         const scenePath = path.join(
           outputDir,

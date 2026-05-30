@@ -11,8 +11,6 @@ function mapAnimationToEffect(animation) {
     panDown: "pan_down",
     pulse: "pulse",
     rotateSlow: "rotate_zoom",
-    blurReveal: "blur_zoom",
-
     kenBurns: "manual_zoom",
     cinematicPush: "zoom_in",
     documentaryMove: "cinematic",
@@ -39,6 +37,12 @@ function mapAnimationToEffect(animation) {
   return map[animation] || "cinematic";
 }
 
+function normalizeFocus(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0.5;
+  return n > 1 ? Math.max(0, Math.min(1, n / 100)) : Math.max(0, Math.min(1, n));
+}
+
 function prepareTimelineForBackend(slides = []) {
   return slides.map((slide) => {
     const duration = Math.max(0.2, Number(slide.end || 0) - Number(slide.start || 0));
@@ -49,8 +53,8 @@ function prepareTimelineForBackend(slides = []) {
       effect: mapAnimationToEffect(slide.animation),
       zoomStart: Number(slide.zoomStart || 1),
       zoomEnd: Number(slide.zoomEnd || Math.max(1.12, Number(slide.zoom || 1) + 0.18)),
-      focusX: Number(slide.focusX ?? 0.5),
-      focusY: Number(slide.focusY ?? 0.5),
+      focusX: normalizeFocus(slide.focusX ?? 50),
+      focusY: normalizeFocus(slide.focusY ?? 50),
       transition: slide.transition || "fade"
     };
   });
@@ -63,6 +67,10 @@ export async function startBackendRender({
   language,
   audioDataUrl,
   audioName,
+  subtitleStyle,
+  subtitlePosition,
+  subtitleFontSize,
+  subtitleBoxEnabled,
   onProgress
 }) {
   const formData = new FormData();
@@ -81,6 +89,10 @@ export async function startBackendRender({
   formData.append("subtitles", JSON.stringify(subtitles || []));
   formData.append("language", language || "id");
   formData.append("filename", "result.mp4");
+  formData.append("subtitleStyle", subtitleStyle || "tiktok");
+  formData.append("subtitlePosition", subtitlePosition || "bottom");
+  formData.append("subtitleFontSize", String(subtitleFontSize || 42));
+  formData.append("subtitleBoxEnabled", subtitleBoxEnabled === false ? "false" : "true");
 
   if (videoSize) {
     formData.append("width", String(videoSize.width || 1280));

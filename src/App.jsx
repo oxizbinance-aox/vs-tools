@@ -207,7 +207,7 @@ export default function App() {
   const [user, setUser] = useState(null);
 
   const audioRef = useRef(null);
-  const t = TEXT[language];
+  const t = TEXT[language] || TEXT.id;
   const current =
   slides.find(
     (slide) =>
@@ -344,7 +344,7 @@ export default function App() {
 
   async function addImagesToCurrentSlide(e) {
     const files = Array.from(e.target.files || []);
-    if (!current) return alert("Pilih slide dulu.");
+    if (!current) return alert(t.chooseSlideFirst);
     if (!files.length) return;
 
     const currentImages = normalizeSlideImages(current);
@@ -403,7 +403,7 @@ export default function App() {
     const start = Number((audioTime || 0).toFixed(2));
     setSubtitles((prev) => [
       ...prev,
-      { id: Date.now(), start, end: Number((start + 4).toFixed(2)), text: "Tulis subtitle di sini" },
+      { id: Date.now(), start, end: Number((start + 4).toFixed(2)), text: t.subtitleText },
     ]);
   }
 
@@ -412,7 +412,7 @@ export default function App() {
   }
 
   function autoFitToAudio() {
-    if (!audioDuration || !slides.length) return alert("Upload audio dan gambar dulu.");
+    if (!audioDuration || !slides.length) return alert(t.uploadAudioFirst);
 
     const perSlide = audioDuration / slides.length;
 
@@ -426,7 +426,7 @@ export default function App() {
   }
 
   function togglePlay() {
-    if (!audioRef.current) return alert("Upload audio dulu.");
+    if (!audioRef.current) return alert(t.uploadAudioFirst);
 
     setPlaying((prev) => !prev);
 
@@ -439,12 +439,12 @@ export default function App() {
 
 
   async function backendRender() {
-    if (!slides.length) return alert("Upload gambar dulu.");
-    if (!audioDataUrl) return alert("Upload audio dulu.");
+    if (!slides.length) return alert(t.uploadImageFirst);
+    if (!audioDataUrl) return alert(t.uploadAudioFirst);
 
     try {
       setExporting(true);
-      setExportStatus("Sending project to backend...");
+      setExportStatus(t.sendingProject);
       setExportProgress(5);
 
       await startBackendRender({
@@ -459,16 +459,16 @@ export default function App() {
         subtitleFontSize,
         subtitleBoxEnabled,
         onProgress: (progress) => {
-          setExportStatus(progress.message || "Rendering...");
+          setExportStatus(progress.message || t.renderProgress);
           setExportProgress(progress.progress || 0);
         },
       });
 
-      setExportStatus("Download complete.");
+      setExportStatus(t.renderComplete);
       setExportProgress(100);
     } catch (err) {
       console.error(err);
-      alert(err?.message || "Download gagal.");
+      alert(err?.message || t.invalidProject);
     } finally {
       setTimeout(() => {
         setExporting(false);
@@ -489,10 +489,10 @@ export default function App() {
     try {
       const project = await loadProjectFile(file);
       loadProjectData(project);
-      alert("Project berhasil diload.");
+      alert(t.projectLoaded);
     } catch (err) {
       console.error(err);
-      alert("File project tidak valid.");
+      alert(t.invalidProject);
     }
   }
 
@@ -559,7 +559,7 @@ export default function App() {
             />
           </div>
 
-          <div style={messyBrandStyles.badge}>AI VIDEO PRODUCTION DASHBOARD</div>
+          <div style={messyBrandStyles.badge}>{t.dashboardBadge}</div>
 
           <h1 style={messyBrandStyles.title}>
             <span style={messyBrandStyles.titleText}>VS Tools</span>
@@ -610,12 +610,12 @@ export default function App() {
           <div style={{ display: "flex", gap: 12, marginBottom: 12, position: "relative", zIndex: 100 }}>
             <button style={styles.whiteButton} onClick={togglePlay}>
               {playing ? <Pause size={18} /> : <Play size={18} />}
-              {playing ? "Pause Preview" : "Play Preview"}
+              {playing ? t.pausePreview : t.playPreview}
             </button>
 
             <button style={styles.pinkButton} onClick={backendRender}>
               <Download size={18} />
-              Render MP4
+              {t.renderMp4}
             </button>
           </div>
           <div
@@ -640,7 +640,7 @@ export default function App() {
                 />
               </>
             ) : (
-              <div style={styles.empty}>Upload gambar dan audio untuk mulai membuat video.</div>
+              <div style={styles.empty}>{t.emptyPreview}</div>
             )}
           </div>
 
@@ -686,9 +686,9 @@ export default function App() {
           )}
 
           <section style={{ marginTop: 22 }}>
-            <h2>Slide Timeline</h2>
+            <h2>{t.slideTimeline}</h2>
 
-            {slides.length === 0 && <p style={styles.muted}>Belum ada slide.</p>}
+            {slides.length === 0 && <p style={styles.muted}>{t.noSlides}</p>}
 
             {slides.map((slide, index) => (
               <div
@@ -770,7 +770,7 @@ export default function App() {
           <h2 style={{ marginTop: 24 }}>{t.slideEditor}</h2>
 
           {!current ? (
-            <p style={styles.muted}>Pilih slide dulu.</p>
+            <p style={styles.muted}>{t.chooseSlideFirst}</p>
           ) : (
             <>
               <label style={styles.label}>{t.background}</label>
@@ -800,21 +800,31 @@ export default function App() {
                 ))}
               </select>
 
-              <label style={styles.label}>Layout Gambar</label>
+              <label style={styles.label}>{t.layoutImage}</label>
               <select
                 value={current.layoutType || "single"}
                 onChange={(e) => updateSlide("layoutType", e.target.value)}
                 style={styles.input}
               >
                 {LAYOUT_OPTIONS.map((item) => (
-                  <option key={item.value} value={item.value}>{item.label}</option>
+                  <option key={item.value} value={item.value}>
+                    {t[
+                      item.value === "single"
+                        ? "layoutSingle"
+                        : item.value === "split2"
+                          ? "layoutSplit2"
+                          : item.value === "grid4"
+                            ? "layoutGrid4"
+                            : "layoutCollage"
+                    ] || item.label}
+                  </option>
                 ))}
               </select>
 
-              <label style={styles.label}>Tambah Gambar ke Slide Ini</label>
+              <label style={styles.label}>{t.addImageCurrent}</label>
               <label style={styles.secondaryButton}>
                 <Upload size={16} />
-                Add Images for Layout
+                {t.addImagesForLayout}
                 <input hidden multiple type="file" accept="image/*" onChange={addImagesToCurrentSlide} />
               </label>
 
@@ -836,8 +846,8 @@ export default function App() {
 
               <label style={styles.label}>{t.imageMode}</label>
               <select value={current.fit} onChange={(e) => updateSlide("fit", e.target.value)} style={styles.input}>
-                <option value="cover">Crop / Cover</option>
-                <option value="contain">Full Image</option>
+                <option value="cover">{t.cropCover}</option>
+                <option value="contain">{t.fullImage}</option>
               </select>
 
               <label style={styles.label}>{t.start}: {formatTime(current.start)}</label>
@@ -849,13 +859,13 @@ export default function App() {
               <label style={styles.label}>{t.zoom}: {current.zoom}</label>
               <input type="range" min="0.5" max="5" step="0.1" value={current.zoom} onChange={(e) => updateSlide("zoom", Number(e.target.value))} style={styles.range} />
 
-              <label style={styles.label}>Position X: {current.x}</label>
+              <label style={styles.label}>{t.positionX}: {current.x}</label>
               <input type="range" min="-700" max="700" value={current.x} onChange={(e) => updateSlide("x", Number(e.target.value))} style={styles.range} />
 
-              <label style={styles.label}>Position Y: {current.y}</label>
+              <label style={styles.label}>{t.positionY}: {current.y}</label>
               <input type="range" min="-700" max="700" value={current.y} onChange={(e) => updateSlide("y", Number(e.target.value))} style={styles.range} />
 
-              <label style={styles.label}>Focus Point X: {Number(current.focusX ?? 50).toFixed(1)}%</label>
+              <label style={styles.label}>{t.focusPointX}: {Number(current.focusX ?? 50).toFixed(1)}%</label>
               <input
                 type="range"
                 min="0"
@@ -866,7 +876,7 @@ export default function App() {
                 style={styles.range}
               />
 
-              <label style={styles.label}>Focus Point Y: {Number(current.focusY ?? 50).toFixed(1)}%</label>
+              <label style={styles.label}>{t.focusPointY}: {Number(current.focusY ?? 50).toFixed(1)}%</label>
               <input
                 type="range"
                 min="0"
@@ -887,40 +897,58 @@ export default function App() {
                 }}
                 onClick={() => setFocusPickMode((prev) => !prev)}
               >
-                {focusPickMode ? "Klik objek di preview..." : "Set Focus Point by Click"}
+                {focusPickMode ? t.clickPreviewFocus : t.setFocusByClick}
               </button>
 
               <p style={styles.mutedSmall}>
-                Aktifkan tombol ini, lalu klik objek pada preview untuk membuat zoom fokus ke titik tersebut.
+                {t.focusHint}
               </p>
             </>
           )}
 
           <h2 style={{ marginTop: 24 }}>{t.subtitleEditor}</h2>
 
-          <label style={styles.label}>Subtitle Style</label>
+          <label style={styles.label}>{t.subtitleStyle}</label>
           <select
             value={subtitleStyle}
             onChange={(e) => setSubtitleStyle(e.target.value)}
             style={styles.input}
           >
             {SUBTITLE_STYLE_OPTIONS.map((item) => (
-              <option key={item.value} value={item.value}>{item.label}</option>
+              <option key={item.value} value={item.value}>
+                {t[
+                  item.value === "tiktok"
+                    ? "styleTiktok"
+                    : item.value === "documentary"
+                      ? "styleDocumentary"
+                      : item.value === "youtube"
+                        ? "styleYoutube"
+                        : "styleMinimal"
+                ] || item.label}
+              </option>
             ))}
           </select>
 
-          <label style={styles.label}>Subtitle Position</label>
+          <label style={styles.label}>{t.subtitlePosition}</label>
           <select
             value={subtitlePosition}
             onChange={(e) => setSubtitlePosition(e.target.value)}
             style={styles.input}
           >
             {SUBTITLE_POSITION_OPTIONS.map((item) => (
-              <option key={item.value} value={item.value}>{item.label}</option>
+              <option key={item.value} value={item.value}>
+                {t[
+                  item.value === "top"
+                    ? "positionTop"
+                    : item.value === "center"
+                      ? "positionCenter"
+                      : "positionBottom"
+                ] || item.label}
+              </option>
             ))}
           </select>
 
-          <label style={styles.label}>Subtitle Font Size: {subtitleFontSize}px</label>
+          <label style={styles.label}>{t.subtitleFontSize}: {subtitleFontSize}px</label>
           <input
             type="range"
             min="20"
@@ -936,7 +964,7 @@ export default function App() {
               checked={subtitleBoxEnabled}
               onChange={(e) => setSubtitleBoxEnabled(e.target.checked)}
             />
-            Subtitle Background Box
+            {t.subtitleBackgroundBox}
           </label>
 
           <button style={styles.secondaryButton} onClick={addSubtitle}>
@@ -945,14 +973,14 @@ export default function App() {
 
           {subtitles.map((subtitle, index) => (
             <div key={subtitle.id} style={styles.subtitleBox}>
-              <label style={styles.label}>Subtitle Text</label>
+              <label style={styles.label}>{t.subtitleText}</label>
               <textarea
                 value={subtitle.text}
                 onChange={(e) => updateSubtitle(index, "text", e.target.value)}
                 style={styles.textarea}
               />
 
-              <label style={styles.label}>Start</label>
+              <label style={styles.label}>{t.start}</label>
               <input
                 type="number"
                 step="0.1"
@@ -960,7 +988,7 @@ export default function App() {
                 onChange={(e) => updateSubtitle(index, "start", Number(e.target.value))}
                 style={styles.input}
               />
-              <label style={styles.label}>End</label>
+              <label style={styles.label}>{t.end}</label>
               <input
                 type="number"
                 step="0.1"
@@ -971,7 +999,7 @@ export default function App() {
 
               <button style={styles.secondaryButton} onClick={() => deleteSubtitle(subtitle.id)}>
                 <Trash2 size={16} />
-                Delete Subtitle
+                {t.deleteSubtitle}
               </button>
             </div>
           ))}
