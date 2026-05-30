@@ -208,12 +208,7 @@ export default function App() {
 
   const audioRef = useRef(null);
   const t = TEXT[language] || TEXT.id;
-  const current =
-  slides.find(
-    (slide) =>
-      audioTime >= slide.start &&
-      audioTime < slide.end
-  ) || slides[active];
+  const current = slides[active] || null;
   const selectedSize = VIDEO_SIZES[videoSize];
 
   useEffect(() => {
@@ -768,6 +763,12 @@ export default function App() {
           </button>
 
           <h2 style={{ marginTop: 24 }}>{t.slideEditor}</h2>
+
+          {current && (
+            <div style={{ ...styles.mutedSmall, marginBottom: 12 }}>
+              {t.editorSyncNote} <strong>{active + 1}. {current.name}</strong>
+            </div>
+          )}
 
           {!current ? (
             <p style={styles.muted}>{t.chooseSlideFirst}</p>
