@@ -638,29 +638,6 @@ export default function App() {
                   focusPickMode={focusPickMode}
                   onSetFocusPoint={setFocusPoint}
                 />
-
-                <div
-                  style={{
-                    position: "absolute",
-                    left: 16,
-                    right: 16,
-                    bottom: 16,
-                    zIndex: 50,
-                    display: "flex",
-                    gap: 12,
-                    justifyContent: "center"
-                  }}
-                >
-                  <button style={styles.whiteButton} onClick={togglePlay}>
-                    {playing ? <Pause size={18} /> : <Play size={18} />}
-                    {playing ? "Pause Preview" : "Play Preview"}
-                  </button>
-
-                  <button style={styles.pinkButton} onClick={backendRender}>
-                    <Download size={18} />
-                    {t.exportBackend}
-                  </button>
-                </div>
               </>
             ) : (
               <div style={styles.empty}>Upload gambar dan audio untuk mulai membuat video.</div>
