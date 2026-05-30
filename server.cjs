@@ -501,7 +501,7 @@ async function createScene(imagePath, scenePath, item, width, height, fps) {
   ]);
 }
 
-async function concatScenes(scenePaths, concatFile, videoOnlyPath) {
+async function concatScenes(scenePaths, concatFile, videoOnlyPath, fps) {
   const list = scenePaths
     .map(function (p) {
       return "file '" + p.replace(/\\/g, "/") + "'";
@@ -511,23 +511,31 @@ async function concatScenes(scenePaths, concatFile, videoOnlyPath) {
   fs.writeFileSync(concatFile, list);
 
   await run("ffmpeg", [
-    "-y",
-    "-f",
-    "concat",
-    "-safe",
-    "0",
-    "-i",
-    concatFile,
-    "-c:v",
-    "libx264",
-    "-preset",
-    "veryfast",
-    "-pix_fmt",
-    "yuv420p",
-    "-movflags",
-    "+faststart",
-    videoOnlyPath
-  ]);
+  "-y",
+  "-f",
+  "concat",
+  "-safe",
+  "0",
+  "-i",
+  concatFile,
+  "-r",
+  String(fps),
+  "-fps_mode",
+  "cfr",
+  "-c:v",
+  "libx264",
+  "-preset",
+  "veryfast",
+  "-crf",
+  "20",
+  "-pix_fmt",
+  "yuv420p",
+  "-video_track_timescale",
+  "90000",
+  "-movflags",
+  "+faststart",
+  videoOnlyPath
+]);
 }
 
 async function mergeAudio(videoOnlyPath, audioPath, outputPath) {
@@ -901,7 +909,7 @@ app.post(
       const filename = safeName(req.body.filename || "result.mp4");
       const width = clampNumber(req.body.width, 360, 3840, 1280);
       const height = clampNumber(req.body.height, 360, 2160, 720);
-      const fps = clampNumber(req.body.fps, 30, 60, 60);
+      const fps = clampNumber(req.body.fps, 30, 30, 30);
       const timeline = parseTimeline(req.body.timeline);
       const subtitles = parseSubtitles(req.body.subtitles);
       const subtitleStyle = req.body.subtitleStyle || "tiktok";
