@@ -762,21 +762,6 @@ app.post(
   }
 );
 
-app.post("/api/download/mp4", async function (req, res) {
-  try {
-    res.setHeader("Content-Type", "application/json");
-    return res.json({
-      ok: false,
-      message: "MP4 endpoint sudah masuk ke backend, tapi render engine MP4 belum dipasang di server.cjs"
-    });
-  } catch (error) {
-    return res.status(500).json({
-      ok: false,
-      error: error.message
-    });
-  }
-});
-
 app.use(function (req, res) {
   res.sendFile(path.join(__dirname, "public", "index.html"));
 });
