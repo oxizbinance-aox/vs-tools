@@ -24,6 +24,141 @@ import TemplateMarketplace from "./components/TemplateMarketplace";
 import AdvancedWaveform from "./components/AdvancedWaveform";
 import RenderPreview from "./components/RenderPreview";
 
+
+const messyBrandStyles = {
+  heroHeader: {
+    position: "relative",
+    maxWidth: 1360,
+    margin: "0 auto 24px",
+    padding: "34px 28px 28px",
+    borderRadius: 34,
+    overflow: "hidden",
+    textAlign: "center",
+    background:
+      "radial-gradient(circle at top center, rgba(255,47,179,.30), transparent 34%), radial-gradient(circle at bottom left, rgba(255,255,255,.10), transparent 28%), linear-gradient(135deg, rgba(24,0,24,.92), rgba(9,0,18,.96), rgba(0,0,0,.96))",
+    border: "1px solid rgba(255,255,255,.12)",
+    boxShadow: "0 24px 80px rgba(0,0,0,.42)",
+  },
+
+  heroContent: {
+    position: "relative",
+    zIndex: 2,
+  },
+
+  heroLogoWrap: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
+  heroLogo: {
+    width: 120,
+    height: 120,
+    objectFit: "contain",
+    borderRadius: 26,
+    filter:
+      "drop-shadow(0 0 18px rgba(255,47,179,.75)) drop-shadow(0 0 34px rgba(255,47,179,.35))",
+  },
+
+  badge: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    margin: "4px auto 12px",
+    padding: "9px 16px",
+    borderRadius: 999,
+    background: "rgba(255,47,179,.13)",
+    border: "1px solid rgba(255,47,179,.42)",
+    color: "#ff8bd8",
+    fontSize: 13,
+    fontWeight: 950,
+    letterSpacing: 1.4,
+    textTransform: "uppercase",
+  },
+
+  title: {
+    margin: "0 auto 14px",
+    maxWidth: 980,
+    fontSize: "clamp(46px, 7.4vw, 102px)",
+    lineHeight: 0.96,
+    fontWeight: 1000,
+    letterSpacing: "-0.055em",
+    textAlign: "center",
+    color: "#fff",
+    textShadow: "0 10px 32px rgba(0,0,0,.55)",
+    whiteSpace: "normal",
+    overflow: "visible",
+  },
+
+  titleText: {
+    display: "inline-block",
+    background: "linear-gradient(180deg, #ffffff 0%, #eeeeff 55%, #cfcfe8 100%)",
+    WebkitBackgroundClip: "text",
+    color: "transparent",
+  },
+
+  titlePink: {
+    display: "inline-block",
+    marginLeft: 16,
+    background: "linear-gradient(180deg, #ff80d4 0%, #ff2fb3 55%, #b50074 100%)",
+    WebkitBackgroundClip: "text",
+    color: "transparent",
+    textShadow: "0 0 36px rgba(255,47,179,.35)",
+  },
+
+  subtitle: {
+    maxWidth: 860,
+    margin: "0 auto 26px",
+    textAlign: "center",
+    fontSize: "clamp(16px, 1.55vw, 22px)",
+    lineHeight: 1.48,
+    color: "rgba(255,255,255,.80)",
+    textWrap: "balance",
+  },
+
+  actions: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 14,
+    flexWrap: "wrap",
+    marginTop: 10,
+  },
+
+  actionButton: {
+    minHeight: 56,
+    padding: "15px 22px",
+    borderRadius: 18,
+    fontSize: 16,
+    boxShadow: "0 14px 34px rgba(0,0,0,.24)",
+  },
+
+  languageSelect: {
+    minHeight: 56,
+    borderRadius: 18,
+    padding: "0 18px",
+  },
+
+  glowLine: {
+    position: "absolute",
+    left: "50%",
+    top: 132,
+    width: "min(680px, 72%)",
+    height: 1,
+    transform: "translateX(-50%)",
+    background:
+      "linear-gradient(90deg, transparent, rgba(255,47,179,.70), rgba(255,255,255,.80), rgba(255,47,179,.70), transparent)",
+    opacity: .65,
+  },
+
+  mobileHint: {
+    fontSize: 12,
+    color: "rgba(255,255,255,.55)",
+    marginTop: 8,
+  },
+};
+
 export default function App() {
   const [language, setLanguage] = useState("id");
   const [slides, setSlides] = useState([]);
@@ -358,44 +493,66 @@ export default function App() {
 
   return (
     <div style={styles.page}>
-      <header style={styles.header}>
-        <div>
-          <div style={styles.badge}>AI VIDEO PRODUCTION DASHBOARD</div>
-          <h1 style={styles.title}>{t.title}</h1>
-          <p style={styles.subtitle}>{t.subtitle}</p>
+      <section style={messyBrandStyles.heroHeader}>
+        <div style={messyBrandStyles.glowLine} />
+
+        <div style={messyBrandStyles.heroContent}>
+          <div style={messyBrandStyles.heroLogoWrap}>
+            <img
+              src="/messy-logo.jpg"
+              alt="Messy Logo"
+              style={messyBrandStyles.heroLogo}
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          </div>
+
+          <div style={messyBrandStyles.badge}>AI VIDEO PRODUCTION DASHBOARD</div>
+
+          <h1 style={messyBrandStyles.title}>
+            <span style={messyBrandStyles.titleText}>VS Tools</span>
+            <span style={messyBrandStyles.titlePink}>PRO</span>
+          </h1>
+
+          <p style={messyBrandStyles.subtitle}>{t.subtitle}</p>
+
+          <div style={messyBrandStyles.actions}>
+            <select
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+              style={{ ...styles.selectTop, ...messyBrandStyles.languageSelect }}
+            >
+              <option value="id">🇮🇩 Indonesia</option>
+              <option value="en">🇺🇸 English</option>
+              <option value="zh">🇨🇳 Mandarin</option>
+            </select>
+
+            <label style={{ ...styles.whiteButton, ...messyBrandStyles.actionButton }}>
+              <Upload size={20} />
+              {t.uploadImages}
+              <input hidden multiple type="file" accept="image/*" onChange={uploadImages} />
+            </label>
+
+            <label style={{ ...styles.pinkButton, ...messyBrandStyles.actionButton }}>
+              <Music size={20} />
+              {t.uploadAudio}
+              <input hidden type="file" accept="audio/*" onChange={uploadAudio} />
+            </label>
+
+            <button style={{ ...styles.whiteButton, ...messyBrandStyles.actionButton }} onClick={saveLocalProject}>
+              <Save size={20} />
+              {t.saveProject}
+            </button>
+
+            <label style={{ ...styles.pinkButton, ...messyBrandStyles.actionButton }}>
+              <FolderOpen size={20} />
+              {t.loadProject}
+              <input hidden type="file" accept=".vstools,application/json" onChange={loadLocalProject} />
+            </label>
+          </div>
         </div>
-
-        <div style={styles.actions}>
-          <select value={language} onChange={(e) => setLanguage(e.target.value)} style={styles.selectTop}>
-            <option value="id">🇮🇩 Indonesia</option>
-            <option value="en">🇺🇸 English</option>
-            <option value="zh">🇨🇳 Mandarin</option>
-          </select>
-
-          <label style={styles.whiteButton}>
-            <Upload size={18} />
-            {t.uploadImages}
-            <input hidden multiple type="file" accept="image/*" onChange={uploadImages} />
-          </label>
-
-          <label style={styles.pinkButton}>
-            <Music size={18} />
-            {t.uploadAudio}
-            <input hidden type="file" accept="audio/*" onChange={uploadAudio} />
-          </label>
-
-          <button style={styles.whiteButton} onClick={saveLocalProject}>
-            <Save size={18} />
-            {t.saveProject}
-          </button>
-
-          <label style={styles.pinkButton}>
-            <FolderOpen size={18} />
-            {t.loadProject}
-            <input hidden type="file" accept=".vstools,application/json" onChange={loadLocalProject} />
-          </label>
-        </div>
-      </header>
+      </section>
 
       <main style={styles.workspace}>
         <section style={styles.panel}>
