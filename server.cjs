@@ -363,7 +363,7 @@ function buildMotionFilter(item, width, height, fps) {
     filter += ",boxblur=2:1,unsharp=5:5:0.8";
   }
 
-  filter += ",fps=" + fps + ",setpts=N/(" + fps + "*TB),format=yuv420p";
+  filter += ",format=yuv420p";
   return filter;
 }
 
