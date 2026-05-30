@@ -750,7 +750,7 @@ export default function App() {
         </section>
 
         <aside style={styles.panel}>
-          <AuthPanel onUserChange={setUser} />
+          <AuthPanel onUserChange={setUser} language={language} />
 
           <TemplateMarketplace onApplyTemplate={applyTemplate} />
 

@@ -2,11 +2,49 @@ import React, { useEffect, useState } from "react";
 import { LogIn, LogOut, UserPlus } from "lucide-react";
 import { supabase } from "../supabaseClient";
 
-export default function AuthPanel({ onUserChange }) {
+const AUTH_TEXT = {
+  id: {
+    loggedInAs: "Login sebagai:",
+    logout: "Keluar",
+    loginTitle: "Login User",
+    registerTitle: "Buat Akun",
+    login: "Login",
+    register: "Daftar",
+    noAccount: "Belum punya akun? Daftar",
+    hasAccount: "Sudah punya akun? Login",
+    accountCreated: "Akun berhasil dibuat. Cek email jika perlu verifikasi.",
+  },
+  en: {
+    loggedInAs: "Logged in as:",
+    logout: "Logout",
+    loginTitle: "User Login",
+    registerTitle: "Create Account",
+    login: "Login",
+    register: "Register",
+    noAccount: "Don't have an account? Register",
+    hasAccount: "Already have an account? Login",
+    accountCreated: "Account created. Check your email if verification is required.",
+  },
+  zh: {
+    loggedInAs: "登录身份：",
+    logout: "退出登录",
+    loginTitle: "用户登录",
+    registerTitle: "创建账户",
+    login: "登录",
+    register: "注册",
+    noAccount: "还没有账户？注册",
+    hasAccount: "已有账户？登录",
+    accountCreated: "账户已创建。如需验证，请检查你的邮箱。",
+  },
+};
+
+export default function AuthPanel({ onUserChange, language = "id" }) {
   const [user, setUser] = useState(null);
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+
+  const t = AUTH_TEXT[language] || AUTH_TEXT.id;
 
   useEffect(() => {
     loadUser();
@@ -28,7 +66,7 @@ export default function AuthPanel({ onUserChange }) {
   async function signUp() {
     const { error } = await supabase.auth.signUp({ email, password });
     if (error) return alert(error.message);
-    alert("Akun berhasil dibuat. Cek email jika perlu verifikasi.");
+    alert(t.accountCreated);
   }
 
   async function signIn() {
@@ -46,12 +84,12 @@ export default function AuthPanel({ onUserChange }) {
   if (user) {
     return (
       <div style={styles.box}>
-        <p style={styles.muted}>Login sebagai:</p>
+        <p style={styles.muted}>{t.loggedInAs}</p>
         <strong>{user.email}</strong>
 
         <button onClick={signOut} style={styles.button}>
           <LogOut size={16} />
-          Logout
+          {t.logout}
         </button>
       </div>
     );
@@ -59,7 +97,7 @@ export default function AuthPanel({ onUserChange }) {
 
   return (
     <div style={styles.box}>
-      <h3>{mode === "login" ? "Login User" : "Buat Akun"}</h3>
+      <h3>{mode === "login" ? t.loginTitle : t.registerTitle}</h3>
 
       <input
         style={styles.input}
@@ -79,12 +117,12 @@ export default function AuthPanel({ onUserChange }) {
       {mode === "login" ? (
         <button onClick={signIn} style={styles.button}>
           <LogIn size={16} />
-          Login
+          {t.login}
         </button>
       ) : (
         <button onClick={signUp} style={styles.button}>
           <UserPlus size={16} />
-          Register
+          {t.register}
         </button>
       )}
 
@@ -92,7 +130,7 @@ export default function AuthPanel({ onUserChange }) {
         onClick={() => setMode(mode === "login" ? "register" : "login")}
         style={styles.linkButton}
       >
-        {mode === "login" ? "Belum punya akun? Register" : "Sudah punya akun? Login"}
+        {mode === "login" ? t.noAccount : t.hasAccount}
       </button>
     </div>
   );
