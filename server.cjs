@@ -771,6 +771,21 @@ app.use(function (req, res, next) {
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
+app.post("/api/download/mp4", async function (req, res) {
+  try {
+    res.setHeader("Content-Type", "application/json");
+    return res.json({
+      ok: false,
+      message: "MP4 endpoint sudah masuk ke backend, tapi render engine MP4 belum dipasang di server.cjs"
+    });
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      error: error.message
+    });
+  }
+});
+
 app.listen(PORT, "0.0.0.0", function () {
   console.log("VS-Tools Presentation Final running on port " + PORT);
 });
