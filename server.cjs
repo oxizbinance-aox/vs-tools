@@ -510,9 +510,10 @@ app.get("/api/projects", async function (req, res) {
 app.post(
   "/api/projects/save",
   upload.fields([
-    { name: "images", maxCount: 150 },
-    { name: "audio", maxCount: 1 }
-  ]),
+  { name: "images", maxCount: 150 },
+  { name: "audio", maxCount: 1 },
+  { name: "project", maxCount: 1 }
+]),
   async function (req, res) {
     const tempFiles = [];
 
