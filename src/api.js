@@ -75,7 +75,27 @@ export async function removeObjectWithBackend(imageBlob, maskBlob) {
     body: formData
   });
 
-  const result = await response.json();
+  const response = await fetch(`${BACKEND_URL}/api/video/timeline`, {
+  method: "POST",
+  body: formData
+});
+
+if (!response.ok) {
+  const text = await response.text();
+  throw new Error(text || "Download failed");
+}
+
+const blob = await response.blob();
+const url = window.URL.createObjectURL(blob);
+
+const a = document.createElement("a");
+a.href = url;
+a.download = "result.mp4";
+document.body.appendChild(a);
+a.click();
+a.remove();
+
+window.URL.revokeObjectURL(url);
 
   if (!response.ok) {
     throw new Error(result.error || "Remove object failed.");
