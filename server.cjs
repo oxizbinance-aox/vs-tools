@@ -901,7 +901,7 @@ app.post(
       const filename = safeName(req.body.filename || "result.mp4");
       const width = clampNumber(req.body.width, 360, 3840, 1280);
       const height = clampNumber(req.body.height, 360, 2160, 720);
-      const fps = clampNumber(req.body.fps, 30, 30, 30);
+      const fps = clampNumber(req.body.fps, 30, 60, 60);
       const timeline = parseTimeline(req.body.timeline);
       const subtitles = parseSubtitles(req.body.subtitles);
       const subtitleStyle = req.body.subtitleStyle || "tiktok";
