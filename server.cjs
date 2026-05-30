@@ -501,7 +501,7 @@ async function createScene(imagePath, scenePath, item, width, height, fps) {
   ]);
 }
 
-await concatScenes(scenePaths, concatFile, videoOnlyPath);
+async function concatScenes(scenePaths, concatFile, videoOnlyPath) {
   const list = scenePaths
     .map(function (p) {
       return "file '" + p.replace(/\\/g, "/") + "'";
