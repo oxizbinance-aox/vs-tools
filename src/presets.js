@@ -1,4 +1,4 @@
-export const BACKEND_URL = "https://kind-flow-production-cc02.up.railway.app";
+export const BACKEND_URL = "";
 
 export const TEXT = {
   id: {
