@@ -363,7 +363,7 @@ function buildMotionFilter(item, width, height, fps) {
     filter += ",boxblur=2:1,unsharp=5:5:0.8";
   }
 
-  filter += ",format=yuv420p";
+  filter += ",fps=" + fps + ",setpts=N/(" + fps + "*TB),format=yuv420p";
   return filter;
 }
 
@@ -492,7 +492,9 @@ async function createScene(imagePath, scenePath, item, width, height, fps) {
     "-c:v",
     "libx264",
     "-preset",
-    "veryfast",
+    "medium",
+    "-crf",
+    "20",
     "-pix_fmt",
     "yuv420p",
     "-r",
