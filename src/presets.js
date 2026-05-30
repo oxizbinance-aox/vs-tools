@@ -1,4 +1,6 @@
-export const BACKEND_URL = "";
+export const BACKEND_URL =
+  import.meta.env.VITE_BACKEND_URL ||
+  "https://kind-flow-production-9ec1.up.railway.app";
 
 export const TEXT = {
   id: {
