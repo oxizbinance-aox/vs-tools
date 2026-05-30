@@ -1,10 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Upload, Music, Save, FolderOpen, Play, Pause, Download, Trash2,
-  Move, Wand2, Scissors, Sparkles
+  Move
 } from "lucide-react";
-import { removeBackground } from "@imgly/background-removal";
-
 import {
   TEXT, VIDEO_SIZES, BACKGROUNDS, BACKGROUND_LABELS,
   TRANSITIONS, TRANSITION_LABELS, ANIMATIONS, ANIMATION_LABELS
@@ -12,14 +10,12 @@ import {
 
 import { styles } from "./styles";
 import {
-  fileToDataUrl, blobToDataUrl, saveProjectFile,
+  fileToDataUrl, saveProjectFile,
   loadProjectFile, buildProjectPayload
 } from "./projectStorage";
 
-import { startBackendRender, generateAutoSubtitle } from "./api";
-import MaskEditor from "./components/MaskEditor";
+import { startBackendRender } from "./api";
 import AuthPanel from "./components/AuthPanel";
-import CloudProjects from "./components/CloudProjects";
 import TemplateMarketplace from "./components/TemplateMarketplace";
 import AdvancedWaveform from "./components/AdvancedWaveform";
 import RenderPreview from "./components/RenderPreview";
@@ -207,7 +203,6 @@ export default function App() {
   const [exportProgress, setExportProgress] = useState(0);
   const [exportStatus, setExportStatus] = useState("");
   const [draggingIndex, setDraggingIndex] = useState(null);
-  const [maskOpen, setMaskOpen] = useState(false);
   const [focusPickMode, setFocusPickMode] = useState(false);
   const [user, setUser] = useState(null);
 
@@ -442,58 +437,6 @@ export default function App() {
     }, 100);
   }
 
-  async function removeBgCurrentSlide() {
-    if (!current?.url) return alert("Pilih slide dulu.");
-
-    try {
-      setExporting(true);
-      setExportStatus("Removing background...");
-      setExportProgress(25);
-
-      const blob = await removeBackground(current.url);
-      const dataUrl = await blobToDataUrl(blob);
-
-      updateSlide("url", dataUrl);
-
-      setExportProgress(100);
-      setExportStatus("Background removed.");
-    } catch (err) {
-      console.error(err);
-      alert("Remove background gagal.");
-    } finally {
-      setTimeout(() => {
-        setExporting(false);
-        setExportProgress(0);
-        setExportStatus("");
-      }, 900);
-    }
-  }
-
-  async function autoSubtitleAI() {
-    if (!audioDataUrl) return alert("Upload audio dulu.");
-
-    try {
-      setExporting(true);
-      setExportProgress(20);
-      setExportStatus("Generating AI subtitle...");
-
-      const audioBlob = await fetch(audioDataUrl).then((res) => res.blob());
-      const result = await generateAutoSubtitle(audioBlob);
-
-      setSubtitles(result);
-      setExportProgress(100);
-      setExportStatus("AI subtitle complete.");
-    } catch (err) {
-      console.error(err);
-      alert("Auto subtitle AI gagal.");
-    } finally {
-      setTimeout(() => {
-        setExporting(false);
-        setExportProgress(0);
-        setExportStatus("");
-      }, 1200);
-    }
-  }
 
   async function backendRender() {
     if (!slides.length) return alert("Upload gambar dulu.");
@@ -832,12 +775,6 @@ export default function App() {
         <aside style={styles.panel}>
           <AuthPanel onUserChange={setUser} />
 
-          <CloudProjects
-            user={user}
-            getProjectData={getProjectData}
-            onLoadProject={loadProjectData}
-          />
-
           <TemplateMarketplace onApplyTemplate={applyTemplate} />
 
           <h2 style={{ marginTop: 24 }}>{t.videoSize}</h2>
@@ -851,22 +788,6 @@ export default function App() {
 
           <button style={styles.secondaryButton} onClick={autoFitToAudio}>
             {t.autoFit}
-          </button>
-
-          <button style={styles.secondaryButton} onClick={removeBgCurrentSlide}>
-            <Wand2 size={16} />
-            {t.removeBg}
-          </button>
-
-          <button
-            style={styles.secondaryButton}
-            onClick={() => {
-              if (!current) return alert("Pilih slide dulu.");
-              setMaskOpen(true);
-            }}
-          >
-            <Scissors size={16} />
-            {t.removeObject}
           </button>
 
           <h2 style={{ marginTop: 24 }}>{t.slideEditor}</h2>
@@ -1045,11 +966,6 @@ export default function App() {
             {t.addSubtitle}
           </button>
 
-          <button style={styles.secondaryButton} onClick={autoSubtitleAI}>
-            <Sparkles size={16} />
-            {t.autoSubtitle}
-          </button>
-
           {subtitles.map((subtitle, index) => (
             <div key={subtitle.id} style={styles.subtitleBox}>
               <label style={styles.label}>Subtitle Text</label>
@@ -1084,14 +1000,6 @@ export default function App() {
           ))}
         </aside>
       </main>
-
-      {maskOpen && current && (
-        <MaskEditor
-          imageUrl={current.url}
-          onClose={() => setMaskOpen(false)}
-          onApply={(newUrl) => updateSlide("url", newUrl)}
-        />
-      )}
     </div>
   );
 }
