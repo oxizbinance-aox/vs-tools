@@ -1,5 +1,61 @@
 import { BACKEND_URL } from "./presets";
 
+function mapAnimationToEffect(animation) {
+  const map = {
+    none: "none",
+    zoomIn: "zoom_in",
+    zoomOut: "zoom_out",
+    panLeft: "pan_left",
+    panRight: "pan_right",
+    panUp: "pan_up",
+    panDown: "pan_down",
+    pulse: "pulse",
+    rotateSlow: "rotate_zoom",
+    blurReveal: "blur_zoom",
+
+    kenBurns: "manual_zoom",
+    cinematicPush: "zoom_in",
+    documentaryMove: "cinematic",
+    heroZoom: "zoom_in",
+    dramaticPull: "zoom_out",
+    smoothSlide: "pan_right",
+    parallaxLeft: "pan_left",
+    parallaxRight: "pan_right",
+    luxuryFloat: "pulse",
+    techScan: "pan_right",
+    blockchainPulse: "pulse",
+    natureSway: "pan_left",
+    paperFloat: "pan_down",
+    vhsJitter: "pulse",
+    slowDrift: "cinematic",
+    floating: "cinematic",
+    softBreath: "pulse",
+    orbit: "rotate_zoom",
+    tiltLeft: "rotate_zoom",
+    tiltRight: "rotate_zoom",
+    microShake: "pulse"
+  };
+
+  return map[animation] || "cinematic";
+}
+
+function prepareTimelineForBackend(slides = []) {
+  return slides.map((slide) => {
+    const duration = Math.max(0.2, Number(slide.end || 0) - Number(slide.start || 0));
+
+    return {
+      ...slide,
+      duration,
+      effect: mapAnimationToEffect(slide.animation),
+      zoomStart: Number(slide.zoomStart || 1),
+      zoomEnd: Number(slide.zoomEnd || Math.max(1.12, Number(slide.zoom || 1) + 0.18)),
+      focusX: Number(slide.focusX ?? 0.5),
+      focusY: Number(slide.focusY ?? 0.5),
+      transition: slide.transition || "fade"
+    };
+  });
+}
+
 export async function startBackendRender({
   slides,
   subtitles,
@@ -21,7 +77,7 @@ export async function startBackendRender({
     formData.append("audio", audioBlob, audioName || "audio.mp3");
   }
 
-  formData.append("timeline", JSON.stringify(slides || []));
+  formData.append("timeline", JSON.stringify(prepareTimelineForBackend(slides || [])));
   formData.append("subtitles", JSON.stringify(subtitles || []));
   formData.append("language", language || "id");
   formData.append("filename", "result.mp4");
