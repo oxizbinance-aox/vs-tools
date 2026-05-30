@@ -762,10 +762,6 @@ app.post(
   }
 );
 
-app.use(function (req, res) {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
 app.post("/api/download/mp4", async function (req, res) {
   try {
     res.setHeader("Content-Type", "application/json");
@@ -779,6 +775,10 @@ app.post("/api/download/mp4", async function (req, res) {
       error: error.message
     });
   }
+});
+
+app.use(function (req, res) {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 app.use(function (req, res, next) {
