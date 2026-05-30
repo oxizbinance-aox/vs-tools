@@ -287,7 +287,7 @@ export default function App() {
       a.click();
     } catch (err) {
       console.error(err);
-      alert("Backend render gagal. Pastikan backend aktif.");
+      alert(err?.message || "Download gagal.");
     } finally {
       setTimeout(() => {
         setExporting(false);
