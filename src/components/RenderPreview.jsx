@@ -147,6 +147,8 @@ export default function RenderPreview({
   subtitlePosition = "bottom",
   subtitleFontSize = 42,
   subtitleBoxEnabled = true,
+  focusPickMode = false,
+  onSetFocusPoint,
 }) {
   const current =
     slides.find(
@@ -173,12 +175,27 @@ export default function RenderPreview({
   const duration = Math.max(0.1, current.end - current.start);
   const progress = Math.max(0, Math.min(1, (audioTime - current.start) / duration));
   const zoom = Number(current.zoom || 1) + progress * 0.25;
+  const focusX = Math.max(0, Math.min(100, Number(current.focusX ?? 50)));
+  const focusY = Math.max(0, Math.min(100, Number(current.focusY ?? 50)));
   const images = normalizeSlideImages(current);
   const layoutType = current.layoutType || "single";
   const visibleImages = layoutType === "single" ? images.slice(0, 1) : images.slice(0, 4);
   const activeSubtitle = subtitles.find(
     subtitle => audioTime >= Number(subtitle.start || 0) && audioTime <= Number(subtitle.end || 0)
   );
+
+  function handlePreviewClick(event) {
+    if (!focusPickMode || typeof onSetFocusPoint !== "function") return;
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const nextFocusX = ((event.clientX - rect.left) / rect.width) * 100;
+    const nextFocusY = ((event.clientY - rect.top) / rect.height) * 100;
+
+    onSetFocusPoint(
+      Math.max(0, Math.min(100, nextFocusX)),
+      Math.max(0, Math.min(100, nextFocusY))
+    );
+  }
 
   return (
     <div
@@ -188,12 +205,14 @@ export default function RenderPreview({
         position: "absolute",
         inset: 0,
         zIndex: 1,
-        pointerEvents: "none",
+        pointerEvents: focusPickMode ? "auto" : "none",
+        cursor: focusPickMode ? "crosshair" : "default",
         background:
           layoutType === "collage"
             ? "radial-gradient(circle at top left, rgba(255,47,179,.18), transparent 35%), linear-gradient(135deg,#050008,#111,#000)"
             : "#000"
       }}
+      onClick={handlePreviewClick}
     >
       {visibleImages.map((image, index) => (
         <div key={`${image.url}-${index}`} style={cellStyle(layoutType, index)}>
@@ -204,11 +223,12 @@ export default function RenderPreview({
               width: "100%",
               height: "100%",
               objectFit: current.fit === "contain" ? "contain" : "cover",
+              transformOrigin: `${focusX}% ${focusY}%`,
               transform: `
                 translate(${Number(current.x || 0) / (layoutType === "single" ? 1 : 5)}px, ${Number(current.y || 0) / (layoutType === "single" ? 1 : 5)}px)
                 scale(${layoutType === "single" ? zoom : Math.min(1.18, zoom)})
               `,
-              transition: "transform .1s linear",
+              transition: "transform .1s linear, transform-origin .18s ease",
               background: "#000",
               display: "block"
             }}
@@ -224,6 +244,47 @@ export default function RenderPreview({
             boxShadow: "inset 0 0 120px rgba(0,0,0,.42)",
           }}
         />
+      )}
+
+      {focusPickMode && (
+        <div
+          style={{
+            position: "absolute",
+            left: `${focusX}%`,
+            top: `${focusY}%`,
+            width: 34,
+            height: 34,
+            borderRadius: "50%",
+            border: "2px solid rgba(255,47,179,.95)",
+            boxShadow: "0 0 0 9999px rgba(0,0,0,.18), 0 0 24px rgba(255,47,179,.85)",
+            transform: "translate(-50%, -50%)",
+            zIndex: 34,
+            pointerEvents: "none",
+          }}
+        >
+          <div
+            style={{
+              position: "absolute",
+              left: "50%",
+              top: -12,
+              bottom: -12,
+              width: 2,
+              background: "rgba(255,255,255,.85)",
+              transform: "translateX(-50%)",
+            }}
+          />
+          <div
+            style={{
+              position: "absolute",
+              top: "50%",
+              left: -12,
+              right: -12,
+              height: 2,
+              background: "rgba(255,255,255,.85)",
+              transform: "translateY(-50%)",
+            }}
+          />
+        </div>
       )}
 
       {activeSubtitle?.text && (

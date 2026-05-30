@@ -208,6 +208,7 @@ export default function App() {
   const [exportStatus, setExportStatus] = useState("");
   const [draggingIndex, setDraggingIndex] = useState(null);
   const [maskOpen, setMaskOpen] = useState(false);
+  const [focusPickMode, setFocusPickMode] = useState(false);
   const [user, setUser] = useState(null);
 
   const audioRef = useRef(null);
@@ -306,6 +307,8 @@ export default function App() {
         zoom: 1,
         x: 0,
         y: 0,
+        focusX: 50,
+        focusY: 50,
         transition: "fade",
         animation: "zoomIn",
         background: "pinkSilver",
@@ -381,6 +384,19 @@ export default function App() {
       layoutType: nextImages.length >= 4 ? "grid4" : nextImages.length >= 2 ? "split2" : "single",
     });
   }
+
+  function setFocusPoint(focusX, focusY) {
+    if (!current) return;
+
+    updateSlidePatch({
+      focusX: Number(focusX.toFixed(1)),
+      focusY: Number(focusY.toFixed(1)),
+      animation: current.animation || "zoomIn",
+    });
+
+    setFocusPickMode(false);
+  }
+
 
   function updateSubtitle(index, key, value) {
     setSubtitles((prev) =>
@@ -676,6 +692,8 @@ export default function App() {
                   subtitlePosition={subtitlePosition}
                   subtitleFontSize={subtitleFontSize}
                   subtitleBoxEnabled={subtitleBoxEnabled}
+                  focusPickMode={focusPickMode}
+                  onSetFocusPoint={setFocusPoint}
                 />
 
                 <div
@@ -938,6 +956,45 @@ export default function App() {
 
               <label style={styles.label}>Position Y: {current.y}</label>
               <input type="range" min="-700" max="700" value={current.y} onChange={(e) => updateSlide("y", Number(e.target.value))} style={styles.range} />
+
+              <label style={styles.label}>Focus Point X: {Number(current.focusX ?? 50).toFixed(1)}%</label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="0.1"
+                value={current.focusX ?? 50}
+                onChange={(e) => updateSlide("focusX", Number(e.target.value))}
+                style={styles.range}
+              />
+
+              <label style={styles.label}>Focus Point Y: {Number(current.focusY ?? 50).toFixed(1)}%</label>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                step="0.1"
+                value={current.focusY ?? 50}
+                onChange={(e) => updateSlide("focusY", Number(e.target.value))}
+                style={styles.range}
+              />
+
+              <button
+                type="button"
+                style={{
+                  ...styles.secondaryButton,
+                  background: focusPickMode
+                    ? "linear-gradient(135deg,rgba(255,47,179,.58),rgba(255,255,255,.16))"
+                    : styles.secondaryButton.background
+                }}
+                onClick={() => setFocusPickMode((prev) => !prev)}
+              >
+                {focusPickMode ? "Klik objek di preview..." : "Set Focus Point by Click"}
+              </button>
+
+              <p style={styles.mutedSmall}>
+                Aktifkan tombol ini, lalu klik objek pada preview untuk membuat zoom fokus ke titik tersebut.
+              </p>
             </>
           )}
 
