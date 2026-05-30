@@ -159,6 +159,21 @@ const messyBrandStyles = {
   },
 };
 
+
+const LAYOUT_OPTIONS = [
+  { value: "single", label: "Single Image" },
+  { value: "split2", label: "Split Screen 2" },
+  { value: "grid4", label: "Grid 4 Images" },
+  { value: "collage", label: "Collage" },
+];
+
+function normalizeSlideImages(slide) {
+  const images = Array.isArray(slide?.images) ? slide.images.filter(Boolean) : [];
+  if (images.length > 0) return images;
+  if (slide?.url) return [{ name: slide.name || "Image", url: slide.url }];
+  return [];
+}
+
 export default function App() {
   const [language, setLanguage] = useState("id");
   const [slides, setSlides] = useState([]);
@@ -258,6 +273,8 @@ export default function App() {
         id: Date.now() + i,
         name: file.name,
         url,
+        images: [{ name: file.name, url }],
+        layoutType: "single",
         start,
         end: start + 5,
         fit: "cover",
@@ -292,6 +309,52 @@ export default function App() {
         index === active ? { ...slide, [key]: value } : slide
       )
     );
+  }
+
+  function updateSlidePatch(patch) {
+    setSlides((prev) =>
+      prev.map((slide, index) =>
+        index === active ? { ...slide, ...patch } : slide
+      )
+    );
+  }
+
+  async function addImagesToCurrentSlide(e) {
+    const files = Array.from(e.target.files || []);
+    if (!current) return alert("Pilih slide dulu.");
+    if (!files.length) return;
+
+    const currentImages = normalizeSlideImages(current);
+    const nextImages = [...currentImages];
+
+    for (const file of files) {
+      if (!file.type.startsWith("image/")) continue;
+      if (nextImages.length >= 4) break;
+      const url = await fileToDataUrl(file);
+      nextImages.push({ name: file.name, url });
+    }
+
+    updateSlidePatch({
+      images: nextImages,
+      url: nextImages[0]?.url || current.url,
+      name: nextImages[0]?.name || current.name,
+      layoutType: nextImages.length >= 4 ? "grid4" : nextImages.length >= 2 ? "split2" : "single",
+    });
+
+    e.target.value = "";
+  }
+
+  function removeLayoutImage(indexToRemove) {
+    if (!current) return;
+    const nextImages = normalizeSlideImages(current).filter((_, index) => index !== indexToRemove);
+    const fallback = nextImages[0] || { name: current.name, url: current.url };
+
+    updateSlidePatch({
+      images: nextImages.length ? nextImages : [fallback],
+      url: fallback.url,
+      name: fallback.name,
+      layoutType: nextImages.length >= 4 ? "grid4" : nextImages.length >= 2 ? "split2" : "single",
+    });
   }
 
   function updateSubtitle(index, key, value) {
@@ -787,6 +850,40 @@ export default function App() {
                 ))}
               </select>
 
+              <label style={styles.label}>Layout Gambar</label>
+              <select
+                value={current.layoutType || "single"}
+                onChange={(e) => updateSlide("layoutType", e.target.value)}
+                style={styles.input}
+              >
+                {LAYOUT_OPTIONS.map((item) => (
+                  <option key={item.value} value={item.value}>{item.label}</option>
+                ))}
+              </select>
+
+              <label style={styles.label}>Tambah Gambar ke Slide Ini</label>
+              <label style={styles.secondaryButton}>
+                <Upload size={16} />
+                Add Images for Layout
+                <input hidden multiple type="file" accept="image/*" onChange={addImagesToCurrentSlide} />
+              </label>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginTop: 10 }}>
+                {normalizeSlideImages(current).map((image, imageIndex) => (
+                  <div key={imageIndex} style={{ position: "relative", borderRadius: 12, overflow: "hidden", border: "1px solid rgba(255,255,255,.14)", background: "rgba(0,0,0,.35)" }}>
+                    <img src={image.url} alt={image.name || `Image ${imageIndex + 1}`} style={{ width: "100%", height: 64, objectFit: "cover", display: "block" }} />
+                    {imageIndex > 0 && (
+                      <button
+                        onClick={() => removeLayoutImage(imageIndex)}
+                        style={{ position: "absolute", top: 4, right: 4, border: 0, borderRadius: 8, padding: "4px 6px", background: "rgba(0,0,0,.72)", color: "white", cursor: "pointer" }}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+
               <label style={styles.label}>{t.imageMode}</label>
               <select value={current.fit} onChange={(e) => updateSlide("fit", e.target.value)} style={styles.input}>
                 <option value="cover">Crop / Cover</option>
@@ -838,7 +935,6 @@ export default function App() {
                 onChange={(e) => updateSubtitle(index, "start", Number(e.target.value))}
                 style={styles.input}
               />
-
               <label style={styles.label}>End</label>
               <input
                 type="number"
